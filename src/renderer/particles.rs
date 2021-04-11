@@ -1,6 +1,5 @@
-use super::{RandomProperty, SpriteRegion};
+use super::{RandomProperty, SpriteRegion, prelude::*};
 
-use crate::semantics::*;
 use sungod::Ra;
 
 /// An actual particle system. Contains a lot of

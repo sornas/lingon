@@ -35,9 +35,10 @@ use luminance_sdl2::GL33Surface;
 use sungod::Ra;
 
 pub mod particles;
+mod prelude;
 
 // Me no likey, but at least it's not documented.
-use crate::semantics::*;
+use crate::renderer::prelude::*;
 
 /// Vertex shader source code.
 const VS_STR: &str = include_str!("vs.glsl");

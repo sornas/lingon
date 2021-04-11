@@ -3,7 +3,6 @@ use std::time::Instant;
 
 mod input;
 mod renderer;
-mod semantics;
 
 fn main() {
     let surface = GL33Surface::build_with(|video| video.window("game", 800, 600))
