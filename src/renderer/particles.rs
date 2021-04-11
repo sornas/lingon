@@ -4,6 +4,18 @@ use sungod::Ra;
 
 use crate::random::RandomProperty;
 
+#[macro_export]
+macro_rules! particle_system {
+    ($($field:ident = [ $lower:expr , $upper:expr ]),*) => {
+        ParticleSystem {
+            $(
+                $field: RandomProperty::new($lower, $upper)
+            ),* ,
+            ..ParticleSystem::new()
+        }
+    };
+}
+
 /// An actual particle system. Contains a lot of
 /// knobs.
 ///
