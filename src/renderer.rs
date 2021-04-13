@@ -32,7 +32,6 @@ use luminance::render_state::RenderState;
 use luminance::tess::Mode;
 use luminance::texture::{Dim3, GenMipmaps, Sampler, Texture};
 use luminance_sdl2::GL33Surface;
-use sungod::Ra;
 
 pub mod particles;
 mod prelude;
@@ -225,66 +224,6 @@ pub type RenderFn = dyn FnMut(
     &mut GL33Surface,
 ) -> Result<(), ()>;
 
-/// A way to handle random variables.
-#[allow(dead_code)]
-pub enum Distribution {
-    /// Always returns 0.
-    NoDice,
-    /// All values are equally likely, no bias.
-    Uniform,
-    /// The fun name for Uniform.
-    Die,
-    /// Biased towards 0.5. Looks like a triangle.
-    TwoDice,
-    /// Biased towards 0.5. Looks like a bellcurve.
-    ThreeDice,
-    /// Biased towards 0. Looks like 1/x.
-    Square,
-}
-
-impl Distribution {
-    /// Returns a random value from the given distribution.
-    pub fn sample(&self) -> f32 {
-        match self {
-            Distribution::NoDice => 0.0,
-            Distribution::Uniform | Distribution::Die => Ra::ggen::<f32>(),
-            Distribution::TwoDice => (Ra::ggen::<f32>() + Ra::ggen::<f32>()) / 2.0,
-            Distribution::ThreeDice => {
-                (Ra::ggen::<f32>() + Ra::ggen::<f32>() + Ra::ggen::<f32>()) / 3.0
-            }
-            Distribution::Square => Ra::ggen::<f32>() * Ra::ggen::<f32>(),
-        }
-    }
-}
-
-/// Takes a lower bound and an upper bound and randomly selects values in-between.
-pub struct RandomProperty {
-    pub distribution: Distribution,
-    pub range: [f32; 2],
-}
-
-impl Default for RandomProperty {
-    fn default() -> Self {
-        Self {
-            distribution: Distribution::Uniform,
-            range: [0.0, 1.0],
-        }
-    }
-}
-
-impl RandomProperty {
-    pub fn new(lo: f32, hi: f32) -> Self {
-        Self {
-            distribution: Distribution::ThreeDice,
-            range: [lo, hi],
-        }
-    }
-
-    /// Samples a random value in the given range.
-    pub fn sample(&self) -> f32 {
-        self.range[0] + (self.range[1] - self.range[0]) * self.distribution.sample()
-    }
-}
 
 /// From where you see the world. Can be moved around via [Transform].
 pub struct Camera {
