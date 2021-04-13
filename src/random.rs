@@ -36,14 +36,6 @@ pub trait Distribute {
 
 /// Always returns 0.
 pub struct NoDice;
-/// All values are equally likely with no bias.
-pub struct Uniform;
-/// Biased towards 0.5. Looks like a triangle.
-pub struct TwoDice;
-/// Biased towards 0.5. Looks like a bellcurve.
-pub struct ThreeDice;
-/// Biased towards 0. Looks like 1/x.
-pub struct Square;
 
 impl Distribute for NoDice {
     fn sample(&self) -> f32 {
@@ -51,11 +43,17 @@ impl Distribute for NoDice {
     }
 }
 
+/// All values are equally likely with no bias.
+pub struct Uniform;
+
 impl Distribute for Uniform {
     fn sample(&self) -> f32 {
         Ra::ggen::<f32>()
     }
 }
+
+/// Biased towards 0.5. Looks like a triangle.
+pub struct TwoDice;
 
 impl Distribute for TwoDice {
     fn sample(&self) -> f32 {
@@ -63,11 +61,17 @@ impl Distribute for TwoDice {
     }
 }
 
+/// Biased towards 0.5. Looks like a bellcurve.
+pub struct ThreeDice;
+
 impl Distribute for ThreeDice {
     fn sample(&self) -> f32 {
         (Ra::ggen::<f32>() + Ra::ggen::<f32>() + Ra::ggen::<f32>()) / 3.0
     }
 }
+
+/// Biased towards 0. Looks like 1/x.
+pub struct Square;
 
 impl Distribute for Square {
     fn sample(&self) -> f32 {
