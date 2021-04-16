@@ -21,7 +21,7 @@ fn main_loop(mut surface: GL33Surface) {
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
 
-    let image = asset::Image::load_from_memory(include_bytes!("../res/coin.png")).unwrap();
+    let image = asset::Image::load_from_memory(include_bytes!("../res/coin-red.png")).unwrap();
     let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
     let sheet = renderer.add_sprite_sheet(builder);
 

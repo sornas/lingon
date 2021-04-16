@@ -1,3 +1,5 @@
+use std::path::Path;
+
 /// A marker type for the unit pixels.
 pub type Pixels = usize;
 
@@ -38,5 +40,10 @@ impl Image {
                 })
             }
         }
+    }
+
+    pub fn load_from_file(file: &Path) -> Option<Self> {
+        let bytes = std::fs::read(file).unwrap();
+        Self::load_from_memory(&bytes)
     }
 }
