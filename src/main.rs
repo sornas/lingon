@@ -75,7 +75,7 @@ fn main_loop(mut surface: GL33Surface) {
         if input.pressed(input::Name::NextCoin) {
             coin_i = (coin_i + 1) % COINS.len();
 
-            let image = asset::Image::load(Path::new("res/coin-gold.png").to_path_buf());
+            let image = asset::Image::load(Path::new(COINS[coin_i]).to_path_buf());
             let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
             sheet = renderer.add_sprite_sheet(builder);
         }
@@ -87,7 +87,7 @@ fn main_loop(mut surface: GL33Surface) {
         }
         particle_systems.update(delta);
 
-        let region = sheet.grid([0, 1, 2, 3, 2, 1][((t * 10.0) as usize) % 6], 0);
+        let region = renderer.sprite_sheets[sheet].grid([0, 1, 2, 3, 2, 1][((t * 10.0) as usize) % 6], 0);
         for x in -5..5 {
             for y in -5..5 {
                 renderer.push(

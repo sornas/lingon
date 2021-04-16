@@ -95,8 +95,8 @@ impl SpriteSheetBuilder {
     }
 }
 
-/// A light reference to a SpriteSheet that lives on the GPU.
-#[derive(Clone, Copy, Debug)]
+/// A sprite sheet that lives on the GPU.
+#[derive(Clone, Debug)]
 pub struct SpriteSheet {
     id: usize,
     image_dim: (Pixels, Pixels),
@@ -498,7 +498,7 @@ impl Renderer {
     /// Takes the SpriteSheetBuilder and generates a new SpriteSheet.
     /// There's a hard limit on the number of SpriteSheets that can be
     /// added: see [SPRITE_SHEET_SIZE].
-    pub fn add_sprite_sheet(&mut self, builder: SpriteSheetBuilder) -> SpriteSheet {
+    pub fn add_sprite_sheet(&mut self, builder: SpriteSheetBuilder) -> usize {
         let id = self.sprite_sheets.len();
         assert!((id as u32) < SPRITE_SHEET_SIZE[2]);
 
@@ -513,7 +513,7 @@ impl Renderer {
         // Upload texture to slot
         let sheet = builder.build(id);
         self.sprite_sheets.push(sheet);
-        sheet
+        id
     }
 
     pub fn render(&mut self, context: &mut GL33Surface) -> Result<(), ()> {
