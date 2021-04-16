@@ -22,6 +22,7 @@
 //! some things (like skewing) are harder to do.
 
 pub use crate::renderer::particles::ParticleSystem;
+use crate::asset::{Image, Pixels};
 use crate::renderer::particles::FrozenParticles;
 
 use cgmath::Vector2;
@@ -68,19 +69,14 @@ const RECT: [Vertex; 6] = [
 // give out a SpriteSheet directly.
 #[derive(Clone, Debug)]
 pub struct SpriteSheetBuilder {
-    pub image: Vec<u8>,
-    pub image_dim: (Pixels, Pixels),
+    pub image: Image,
     pub tile_dim: Option<(Pixels, Pixels)>,
 }
 
-/// A marker type for the unit pixels.
-pub type Pixels = usize;
-
 impl SpriteSheetBuilder {
-    pub fn new(width: Pixels, height: Pixels, image: Vec<u8>) -> Self {
+    pub fn new(image: Image) -> Self {
         Self {
             image,
-            image_dim: (width, height),
             tile_dim: None,
         }
     }
@@ -88,6 +84,14 @@ impl SpriteSheetBuilder {
     pub fn tile_size(mut self, tile_width: Pixels, tile_height: Pixels) -> Self {
         self.tile_dim = Some((tile_width, tile_height));
         self
+    }
+
+    pub fn build(self, id: usize) -> SpriteSheet {
+        SpriteSheet {
+            id,
+            image_dim: (self.image.height, self.image.width),
+            tile_dim: self.tile_dim,
+        }
     }
 }
 
@@ -385,35 +389,6 @@ impl Sprite {
     }
 }
 
-// TODO(ed): This should return an image type, so we can separate bytes
-// from an image.
-/// A fast and easy way to convert bytes to an image.
-pub fn load_image_from_memory(bytes: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
-    // SAFETY: stbi either succeeds or returns a null pointer
-    let mut w: i32 = 0;
-    let mut h: i32 = 0;
-    let mut comp: i32 = 4;
-    unsafe {
-        use stb_image::stb_image::bindgen::*;
-        stbi_set_flip_vertically_on_load(1);
-        let image = stbi_load_from_memory(
-            bytes.as_ptr(),
-            bytes.len() as i32,
-            &mut w,
-            &mut h,
-            &mut comp,
-            4,
-        );
-        if image.is_null() {
-            None
-        } else {
-            let image =
-                Vec::from_raw_parts(image as *mut u8, (w * h * 4) as usize, (w * h * 4) as usize);
-            Some((w as u32, h as u32, image))
-        }
-    }
-}
-
 impl Renderer {
     pub fn new(context: &mut GL33Surface, sampler: Sampler) -> Self {
         let back_buffer = context.back_buffer().unwrap();
@@ -531,16 +506,12 @@ impl Renderer {
             .upload_part_raw(
                 GenMipmaps::No,
                 [0, 0, id as u32],
-                [builder.image_dim.0 as u32, builder.image_dim.1 as u32, 1],
-                &builder.image,
+                [builder.image.width as u32, builder.image.height as u32, 1],
+                &builder.image.data,
             )
             .unwrap();
         // Upload texture to slot
-        let sheet = SpriteSheet {
-            id,
-            image_dim: builder.image_dim,
-            tile_dim: builder.tile_dim,
-        };
+        let sheet = builder.build(id);
         self.sprite_sheets.push(sheet);
         sheet
     }

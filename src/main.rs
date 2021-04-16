@@ -3,8 +3,9 @@ use std::time::Instant;
 
 use crate::random::{Distribute, RandomProperty};
 
-mod random;
+mod asset;
 mod input;
+mod random;
 mod renderer;
 
 fn main() {
@@ -20,8 +21,8 @@ fn main_loop(mut surface: GL33Surface) {
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
 
-    let (w, h, image) = load_image_from_memory(include_bytes!("../res/coin.png")).unwrap();
-    let builder = SpriteSheetBuilder::new(w as usize, h as usize, image).tile_size(16, 16);
+    let image = asset::Image::load_from_memory(include_bytes!("../res/coin.png")).unwrap();
+    let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
     let sheet = renderer.add_sprite_sheet(builder);
 
     let mut particle_systems = ParticleSystem::new();
