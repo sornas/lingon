@@ -17,16 +17,13 @@ fn main() {
 }
 
 fn main_loop(mut surface: GL33Surface) {
-    let mut coin_i = 0;
-    const COINS: &[&str] = &["res/coin-gold.png", "res/coin-red.png"];
-
     use renderer::*;
     let mut sampler = luminance::texture::Sampler::default();
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
 
-    let image = asset::Image::load(Path::new("res/coin-gold.png").to_path_buf());
-    let mut sheet = renderer.add_sprite_sheet(image, (16, 16));
+    let image = asset::Image::new(Path::new("res/coin-gold.png").to_path_buf());
+    let sheet = renderer.add_sprite_sheet(image, (16, 16));
 
     let mut particle_systems = ParticleSystem::new();
     particle_systems.lifetime = RandomProperty::new(1.0, 2.0);
@@ -58,8 +55,6 @@ fn main_loop(mut surface: GL33Surface) {
     input.bind(input::Device::Axis(0, input::Axis::LeftX), input::Name::Right);
     input.bind(input::Device::Axis(0, input::Axis::RightY), input::Name::Up);
 
-    input.bind(input::Device::Key(input::Keycode::R), input::Name::NextCoin);
-
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;
     'app: loop {
         let t = start_t.elapsed().as_millis() as f32 * 1e-3;
@@ -69,13 +64,6 @@ fn main_loop(mut surface: GL33Surface) {
         input.poll(surface.sdl());
         if input.pressed(input::Name::Quit) {
             break 'app;
-        }
-
-        if input.pressed(input::Name::NextCoin) {
-            coin_i = (coin_i + 1) % COINS.len();
-
-            let image = asset::Image::load(Path::new(COINS[coin_i]).to_path_buf());
-            sheet = renderer.add_sprite_sheet(image, (16, 16));
         }
 
         particle_systems.position[0] = t.cos() * 0.5;
@@ -116,6 +104,8 @@ fn main_loop(mut surface: GL33Surface) {
             (input.value(input::Name::Right) - input.value(input::Name::Left)) * delta,
             (input.value(input::Name::Up) - input.value(input::Name::Down)) * delta,
         );
+
+        renderer.reload();
 
         if renderer.render(&mut surface).is_err() {
             break 'app;

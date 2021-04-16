@@ -81,6 +81,23 @@ impl SpriteSheet {
             [xlo, ylo, xlo + w, ylo + h],
         )
     }
+
+    pub fn upload(&self, tex: &mut Tex) {
+        tex
+            .upload_part_raw(
+                GenMipmaps::No,
+                [0, 0, self.id as u32],
+                [self.image.width as u32, self.image.height as u32, 1],
+                &self.image.texture_data,
+            )
+            .unwrap();
+    }
+
+    pub fn reload(&mut self, tex: &mut Tex) {
+        if self.image.reload() {
+            self.upload(tex);
+        }
+    }
 }
 
 // Helper macro for fast writing of boilerplate code.
@@ -459,22 +476,21 @@ impl Renderer {
         let id = self.sprite_sheets.len();
         assert!((id as u32) < SPRITE_SHEET_SIZE[2]);
 
-        self.tex
-            .upload_part_raw(
-                GenMipmaps::No,
-                [0, 0, id as u32],
-                [image.width as u32, image.height as u32, 1],
-                &image.data.bytes,
-            )
-            .unwrap();
         // Upload texture to slot
         let sheet = SpriteSheet {
             id,
             image,
             tile_size,
         };
+        sheet.upload(&mut self.tex);
         self.sprite_sheets.push(sheet);
         id
+    }
+
+    pub fn reload(&mut self) {
+        for sheet in self.sprite_sheets.iter_mut() {
+            sheet.reload(&mut self.tex);
+        }
     }
 
     pub fn render(&mut self, context: &mut GL33Surface) -> Result<(), ()> {
