@@ -25,7 +25,7 @@ fn main_loop(mut surface: GL33Surface) {
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
 
-    let image = asset::Image::load_from_file(Path::new("res/coin-gold.png")).unwrap();
+    let image = asset::Image::load(Path::new("res/coin-gold.png").to_path_buf());
     let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
     let mut sheet = renderer.add_sprite_sheet(builder);
 
@@ -75,7 +75,7 @@ fn main_loop(mut surface: GL33Surface) {
         if input.pressed(input::Name::NextCoin) {
             coin_i = (coin_i + 1) % COINS.len();
 
-            let image = asset::Image::load_from_file(Path::new(COINS[coin_i])).unwrap();
+            let image = asset::Image::load(Path::new("res/coin-gold.png").to_path_buf());
             let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
             sheet = renderer.add_sprite_sheet(builder);
         }

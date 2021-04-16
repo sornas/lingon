@@ -507,7 +507,7 @@ impl Renderer {
                 GenMipmaps::No,
                 [0, 0, id as u32],
                 [builder.image.width as u32, builder.image.height as u32, 1],
-                &builder.image.data,
+                &builder.image.data.bytes,
             )
             .unwrap();
         // Upload texture to slot
