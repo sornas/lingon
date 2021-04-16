@@ -21,17 +21,16 @@ impl Data {
         )
     }
 
-    //FIXME error handling
     pub fn reload(&mut self) -> Option<Vec<u8>> {
-        if !self.file.exists() {
-            return None;
-        }
-        let last_modified = std::fs::metadata(&self.file).unwrap().modified().unwrap();
-        if last_modified != self.last_modified {
-            self.last_modified = last_modified;
-            Some(std::fs::read(&self.file).unwrap())
-        } else {
-            None
+        match std::fs::metadata(&self.file).ok().map(|m| m.modified().ok()).flatten() {
+            Some(last_modified) if last_modified != self.last_modified => {
+                let bytes = std::fs::read(&self.file).ok();
+                if bytes.is_some() {
+                    self.last_modified = last_modified;
+                }
+                bytes
+            }
+            _ => None,
         }
     }
 }
