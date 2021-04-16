@@ -1,9 +1,11 @@
 use luminance_sdl2::GL33Surface;
 use std::time::Instant;
 
+use crate::random::{Distribute, RandomProperty};
+
+mod random;
 mod input;
 mod renderer;
-mod semantics;
 
 fn main() {
     let surface = GL33Surface::build_with(|video| video.window("game", 800, 600))
@@ -85,7 +87,7 @@ fn main_loop(mut surface: GL33Surface) {
         const NUM_BUCKETS: usize = 100;
         let mut buckets = [0; NUM_BUCKETS];
         for _ in 0..10000 {
-            let sample = Distribution::Square.sample();
+            let sample = random::Square.sample();
             buckets[(sample * (NUM_BUCKETS as f32)) as usize] += 1;
         }
 
