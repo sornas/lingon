@@ -60,70 +60,26 @@ const RECT: [Vertex; 6] = [
     Vertex::new(VPosition::new([-0.5, -0.5])),
 ];
 
-/// Wraps the construction of a SpriteSheet.
-//
-// I have some ideas of typing this harder to make sure
-// you place a tile dimension on it. #CatchThoseMistakes
-//
-// The struct might also be useless, and we could easily just
-// give out a SpriteSheet directly.
-#[derive(Clone, Debug)]
-pub struct SpriteSheetBuilder {
-    pub image: Image,
-    pub tile_dim: Option<(Pixels, Pixels)>,
-}
-
-impl SpriteSheetBuilder {
-    pub fn new(image: Image) -> Self {
-        Self {
-            image,
-            tile_dim: None,
-        }
-    }
-
-    pub fn tile_size(mut self, tile_width: Pixels, tile_height: Pixels) -> Self {
-        self.tile_dim = Some((tile_width, tile_height));
-        self
-    }
-
-    pub fn build(self, id: usize) -> SpriteSheet {
-        SpriteSheet {
-            id,
-            image_dim: (self.image.height, self.image.width),
-            tile_dim: self.tile_dim,
-        }
-    }
-}
-
 /// A sprite sheet that lives on the GPU.
 #[derive(Clone, Debug)]
 pub struct SpriteSheet {
     id: usize,
-    image_dim: (Pixels, Pixels),
-    tile_dim: Option<(Pixels, Pixels)>,
+    image: Image,
+    tile_size: (Pixels, Pixels),
 }
 
 impl SpriteSheet {
     /// Returns the SpriteRegion of a tile given the specified tile sizes,
     /// starting from the top left.
     pub fn grid(&self, tx: usize, ty: usize) -> SpriteRegion {
-        if let Some(tile_dim) = self.tile_dim {
-            let xlo = ((tile_dim.0 * tx) as f32) / (SPRITE_SHEET_SIZE[0] as f32);
-            let ylo = ((tile_dim.1 * ty) as f32) / (SPRITE_SHEET_SIZE[1] as f32);
-            let w = (tile_dim.0 as f32) / (SPRITE_SHEET_SIZE[0] as f32);
-            let h = (tile_dim.1 as f32) / (SPRITE_SHEET_SIZE[1] as f32);
-            (
-                self.id as f32 / (SPRITE_SHEET_SIZE[2] as f32),
-                [xlo, ylo, xlo + w, ylo + h],
-            )
-        } else {
-            // TODO(ed): We could potentially catch this as a type error
-            // using the SpriteSheet as an enum?
-            // TODO(ed):
-            // We could also find grid slices that are out of bounds,
-            // if we checked the image dimension.
-            panic!();
-        }
+        let xlo = ((self.tile_size.0 * tx) as f32) / (SPRITE_SHEET_SIZE[0] as f32);
+        let ylo = ((self.tile_size.1 * ty) as f32) / (SPRITE_SHEET_SIZE[1] as f32);
+        let w = (self.tile_size.0 as f32) / (SPRITE_SHEET_SIZE[0] as f32);
+        let h = (self.tile_size.1 as f32) / (SPRITE_SHEET_SIZE[1] as f32);
+        (
+            self.id as f32 / (SPRITE_SHEET_SIZE[2] as f32),
+            [xlo, ylo, xlo + w, ylo + h],
+        )
     }
 }
 
@@ -495,10 +451,11 @@ impl Renderer {
         self.particles.push(system.freeze());
     }
 
-    /// Takes the SpriteSheetBuilder and generates a new SpriteSheet.
+    /// Adds an image as a sprite sheet with the specified tile size.
+    ///
     /// There's a hard limit on the number of SpriteSheets that can be
     /// added: see [SPRITE_SHEET_SIZE].
-    pub fn add_sprite_sheet(&mut self, builder: SpriteSheetBuilder) -> usize {
+    pub fn add_sprite_sheet(&mut self, image: Image, tile_size: (Pixels, Pixels)) -> usize {
         let id = self.sprite_sheets.len();
         assert!((id as u32) < SPRITE_SHEET_SIZE[2]);
 
@@ -506,12 +463,16 @@ impl Renderer {
             .upload_part_raw(
                 GenMipmaps::No,
                 [0, 0, id as u32],
-                [builder.image.width as u32, builder.image.height as u32, 1],
-                &builder.image.data.bytes,
+                [image.width as u32, image.height as u32, 1],
+                &image.data.bytes,
             )
             .unwrap();
         // Upload texture to slot
-        let sheet = builder.build(id);
+        let sheet = SpriteSheet {
+            id,
+            image,
+            tile_size,
+        };
         self.sprite_sheets.push(sheet);
         id
     }

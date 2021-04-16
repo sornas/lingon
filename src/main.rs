@@ -26,8 +26,7 @@ fn main_loop(mut surface: GL33Surface) {
     let mut renderer = Renderer::new(&mut surface, sampler);
 
     let image = asset::Image::load(Path::new("res/coin-gold.png").to_path_buf());
-    let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
-    let mut sheet = renderer.add_sprite_sheet(builder);
+    let mut sheet = renderer.add_sprite_sheet(image, (16, 16));
 
     let mut particle_systems = ParticleSystem::new();
     particle_systems.lifetime = RandomProperty::new(1.0, 2.0);
@@ -76,8 +75,7 @@ fn main_loop(mut surface: GL33Surface) {
             coin_i = (coin_i + 1) % COINS.len();
 
             let image = asset::Image::load(Path::new(COINS[coin_i]).to_path_buf());
-            let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
-            sheet = renderer.add_sprite_sheet(builder);
+            sheet = renderer.add_sprite_sheet(image, (16, 16));
         }
 
         particle_systems.position[0] = t.cos() * 0.5;
