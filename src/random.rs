@@ -1,6 +1,6 @@
 use sungod::Ra;
 
-/// Takes a lower bound and an upper bound and randomly selects values in-between.
+/// Takes a lower and upper bound and randomly selects values in-between.
 pub struct RandomProperty {
     pub distribution: Box<dyn Distribute>,
     pub range: [f32; 2],
