@@ -1,4 +1,5 @@
 use luminance_sdl2::GL33Surface;
+use std::path::Path;
 use std::time::Instant;
 
 use crate::random::{Distribute, RandomProperty};
@@ -16,14 +17,17 @@ fn main() {
 }
 
 fn main_loop(mut surface: GL33Surface) {
+    let mut coin_i = 0;
+    const COINS: &[&str] = &["res/coin-gold.png", "res/coin-red.png"];
+
     use renderer::*;
     let mut sampler = luminance::texture::Sampler::default();
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
 
-    let image = asset::Image::load_from_memory(include_bytes!("../res/coin-red.png")).unwrap();
+    let image = asset::Image::load_from_file(Path::new("res/coin-gold.png")).unwrap();
     let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
-    let sheet = renderer.add_sprite_sheet(builder);
+    let mut sheet = renderer.add_sprite_sheet(builder);
 
     let mut particle_systems = ParticleSystem::new();
     particle_systems.lifetime = RandomProperty::new(1.0, 2.0);
@@ -55,6 +59,8 @@ fn main_loop(mut surface: GL33Surface) {
     input.bind(input::Device::Axis(0, input::Axis::LeftX), input::Name::Right);
     input.bind(input::Device::Axis(0, input::Axis::RightY), input::Name::Up);
 
+    input.bind(input::Device::Key(input::Keycode::R), input::Name::NextCoin);
+
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;
     'app: loop {
         let t = start_t.elapsed().as_millis() as f32 * 1e-3;
@@ -64,6 +70,14 @@ fn main_loop(mut surface: GL33Surface) {
         input.poll(surface.sdl());
         if input.pressed(input::Name::Quit) {
             break 'app;
+        }
+
+        if input.pressed(input::Name::NextCoin) {
+            coin_i = (coin_i + 1) % COINS.len();
+
+            let image = asset::Image::load_from_file(Path::new(COINS[coin_i])).unwrap();
+            let builder = SpriteSheetBuilder::new(image).tile_size(16, 16);
+            sheet = renderer.add_sprite_sheet(builder);
         }
 
         particle_systems.position[0] = t.cos() * 0.5;

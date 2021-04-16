@@ -49,6 +49,8 @@ pub enum Name {
     Up,
     Down,
     Quit,
+
+    NextCoin,
 }
 
 #[derive(Copy, Clone, Debug)]
