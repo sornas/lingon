@@ -21,12 +21,15 @@ impl Data {
     }
 
     //FIXME error handling
-    pub fn reload(&mut self) {
+    pub fn reload(&mut self) -> bool {
         let last_modified = std::fs::metadata(&self.file).unwrap().modified().unwrap();
         if last_modified != self.last_modified {
             let bytes = std::fs::read(&self.file).unwrap();
             self.bytes = bytes;
             self.last_modified = last_modified;
+            true
+        } else {
+            false
         }
     }
 }
