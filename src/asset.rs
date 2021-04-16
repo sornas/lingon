@@ -8,10 +8,9 @@ pub struct Data {
 }
 
 impl Data {
-    //FIXME error handling
     pub fn new(file: PathBuf) -> (Self, Vec<u8>) {
-        let last_modified = std::fs::metadata(&file).unwrap().modified().unwrap();
-        let bytes = std::fs::read(&file).unwrap();
+        let last_modified = std::fs::metadata(&file).expect(&format!("asset file {} not found", file.display())).modified().ok().unwrap_or_else(SystemTime::now);
+        let bytes = std::fs::read(&file).expect(&format!("asset file {} not found", file.display()));
         (
             Self {
                 file,
@@ -47,7 +46,6 @@ pub struct Image {
 }
 
 impl Image {
-    //FIXME error handling
     pub fn new(file: PathBuf) -> Self {
         let (data, bytes) = Data::new(file);
         let mut ret = Self {
