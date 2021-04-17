@@ -34,10 +34,9 @@ macro_rules! particle_system {
     };
 }
 
-/// An actual particle system. Contains a lot of
-/// knobs.
+/// An actual particle system. Contains a lot of knobs.
 ///
-/// Particles are rendered only on the GPU and as such are 'almost' free.
+/// Particles are rendered only on the GPU and as such are _almost_ free.
 #[derive(Default)]
 pub struct ParticleSystem {
     pub time: f32,
