@@ -4,6 +4,16 @@ use std::time::Instant;
 use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
 
+/// A list of all valid inputs.
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Name {
+    Left,
+    Right,
+    Up,
+    Down,
+    Quit,
+}
+
 fn main() {
     let surface = GL33Surface::build_with(|video| video.window("game", 800, 600))
         .expect("Failed to create surface");
@@ -39,17 +49,17 @@ fn main_loop(mut surface: GL33Surface) {
     let start_t = Instant::now();
 
     let mut input = input::InputManager::new(surface.sdl());
-    input.bind(input::Device::Key(input::Keycode::A), input::Name::Left);
-    input.bind(input::Device::Key(input::Keycode::D), input::Name::Right);
-    input.bind(input::Device::Key(input::Keycode::W), input::Name::Up);
-    input.bind(input::Device::Key(input::Keycode::S), input::Name::Down);
+    input.bind(input::Device::Key(input::Keycode::A), Name::Left);
+    input.bind(input::Device::Key(input::Keycode::D), Name::Right);
+    input.bind(input::Device::Key(input::Keycode::W), Name::Up);
+    input.bind(input::Device::Key(input::Keycode::S), Name::Down);
     input.bind(
         input::Device::Key(input::Keycode::Escape),
-        input::Name::Quit,
+        Name::Quit,
     );
-    input.bind(input::Device::Quit, input::Name::Quit);
-    input.bind(input::Device::Axis(0, input::Axis::LeftX), input::Name::Right);
-    input.bind(input::Device::Axis(0, input::Axis::RightY), input::Name::Up);
+    input.bind(input::Device::Quit, Name::Quit);
+    input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
+    input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
 
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;
     'app: loop {
@@ -58,7 +68,7 @@ fn main_loop(mut surface: GL33Surface) {
         old_t = t;
 
         input.poll(surface.sdl());
-        if input.pressed(input::Name::Quit) {
+        if input.pressed(Name::Quit) {
             break 'app;
         }
 
@@ -97,8 +107,8 @@ fn main_loop(mut surface: GL33Surface) {
         renderer.push_particle_system(&particle_systems);
         //input.rumble(0, input.value(input::Name::Right), input.value(input::Name::Up), 1.0).unwrap();
         renderer.camera.move_by(
-            (input.value(input::Name::Right) - input.value(input::Name::Left)) * delta,
-            (input.value(input::Name::Up) - input.value(input::Name::Down)) * delta,
+            (input.value(Name::Right) - input.value(Name::Left)) * delta,
+            (input.value(Name::Up) - input.value(Name::Down)) * delta,
         );
 
         if renderer.render(&mut surface).is_err() {
