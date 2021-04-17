@@ -1,11 +1,8 @@
 use luminance_sdl2::GL33Surface;
 use std::time::Instant;
 
-use crate::random::{Distribute, RandomProperty};
-
-mod random;
-mod input;
-mod renderer;
+use lingon::input;
+use lingon::random::{self, Distribute, RandomProperty};
 
 fn main() {
     let surface = GL33Surface::build_with(|video| video.window("game", 800, 600))
@@ -15,7 +12,7 @@ fn main() {
 }
 
 fn main_loop(mut surface: GL33Surface) {
-    use renderer::*;
+    use lingon::renderer::*;
     let mut sampler = luminance::texture::Sampler::default();
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
