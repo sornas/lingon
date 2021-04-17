@@ -37,7 +37,7 @@ fn main_loop(mut surface: GL33Surface) {
         acc_magnitude  = [0.2, 0.8]    random::TwoDice,
         angle          = [-2.0, 2.0]   random::TwoDice,
         angle_velocity = [-2.0, 2.0]   random::TwoDice,
-        angle_drag     = [0.0, 2.0]    random::TwoDice
+        angle_drag     = [0.0, 2.0]    random::TwoDice,
     );
 
     let start_t = Instant::now();

@@ -5,9 +5,26 @@ use sungod::Ra;
 
 use crate::random::{RandomProperty, Uniform};
 
+/// Creates a particle system.
+/// 
+/// Basically a shorthand for struct initialization. Compare the following:
+/// ```
+/// let particle_system = ParticleSystem {
+///     lifetime:      RandomProperty::new(1.0, 2.0,  Box::new(Uniform)),
+///     vel_magnitude: RandomProperty::new(-2.0, 2.0, Box::new(Uniform)),
+///     // ...
+///     ..ParticleSystem::new()
+/// }
+///
+/// let particle_system = particle_system!(
+///     lifetime     = [1.0, 2.0]  Uniform,
+///     vel_magnitue = [-2.0, 2.0] Uniform,
+///     // ...
+/// );
+/// ```
 #[macro_export]
 macro_rules! particle_system {
-    ($($field:ident = [ $lower:expr , $upper:expr ] $distribution:expr ),*) => {
+    ($($field:ident = [ $lower:expr , $upper:expr ] $distribution:expr ),* $(, )? ) => {
         ParticleSystem {
             $(
                 $field: RandomProperty::new($lower, $upper, Box::new($distribution))
