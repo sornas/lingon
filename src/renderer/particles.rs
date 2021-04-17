@@ -178,7 +178,7 @@ impl ParticleSystem {
                 self.angle_drag.sample(),
             ]),
 
-            scale_extrems: PScaleExtrems::new([
+            scale_extremes: PScaleExtremes::new([
                 self.start_sx.sample(),
                 self.start_sy.sample(),
                 self.end_sx.sample(),
