@@ -1,15 +1,16 @@
 use super::{prelude::*, SpriteRegion};
 
+use std::f32::consts::PI;
 use sungod::Ra;
 
-use crate::random::RandomProperty;
+use crate::random::{RandomProperty, Uniform};
 
 #[macro_export]
 macro_rules! particle_system {
-    ($($field:ident = [ $lower:expr , $upper:expr ]),*) => {
+    ($($field:ident = [ $lower:expr , $upper:expr ] $distribution:expr ),*) => {
         ParticleSystem {
             $(
-                $field: RandomProperty::new($lower, $upper)
+                $field: RandomProperty::new($lower, $upper, Box::new($distribution))
             ),* ,
             ..ParticleSystem::new()
         }
@@ -97,15 +98,15 @@ impl ParticleSystem {
             time: 0.0,
             particles: Vec::new(),
 
-            x: RandomProperty::new(-0.1, 0.1),
-            y: RandomProperty::new(-0.1, 0.1),
+            x: RandomProperty::new(-0.1, 0.1, Box::new(Uniform)),
+            y: RandomProperty::new(-0.1, 0.1, Box::new(Uniform)),
 
-            v_angle: RandomProperty::new(0.0, 2.0 * std::f32::consts::PI),
+            v_angle: RandomProperty::new(0.0, 2.0 * PI, Box::new(Uniform)),
 
-            acceleration_angle: RandomProperty::new(0.0, 2.0 * std::f32::consts::PI),
+            acceleration_angle: RandomProperty::new(0.0, 2.0 * PI, Box::new(Uniform)),
 
-            start_sx: RandomProperty::new(1.0, 1.0),
-            start_sy: RandomProperty::new(1.0, 1.0),
+            start_sx: RandomProperty::new(1.0, 1.0, Box::new(Uniform)),
+            start_sy: RandomProperty::new(1.0, 1.0, Box::new(Uniform)),
 
             ..Self::default()
         }

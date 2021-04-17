@@ -26,18 +26,18 @@ fn main_loop(mut surface: GL33Surface) {
     let sheet = renderer.add_sprite_sheet(builder);
 
     let mut particle_system = particle_system!(
-        lifetime = [1.0, 2.0],
-        start_sx = [0.01, 0.015],
-        start_sy = [0.01, 0.015],
-        end_sx = [0.0, 0.0],
-        end_sy = [0.0, 0.0],
-        v_angle = [-PI, PI],
-        v_magnitude = [-2.0, 2.0],
-        acceleration_angle = [-PI, PI],
-        acceleration_magnitude = [0.2, 0.8],
-        angle = [-2.0, 2.0],
-        angle_velocity = [-2.0, 2.0],
-        angle_drag = [0.0, 2.0]
+        lifetime               = [1.0, 2.0]    random::TwoDice,
+        start_sx               = [0.01, 0.015] random::TwoDice,
+        start_sy               = [0.01, 0.015] random::TwoDice,
+        end_sx                 = [0.0, 0.0]    random::TwoDice,
+        end_sy                 = [0.0, 0.0]    random::TwoDice,
+        v_angle                = [-PI, PI]     random::TwoDice,
+        v_magnitude            = [-2.0, 2.0]   random::TwoDice,
+        acceleration_angle     = [-PI, PI]     random::TwoDice,
+        acceleration_magnitude = [0.2, 0.8]    random::TwoDice,
+        angle                  = [-2.0, 2.0]   random::TwoDice,
+        angle_velocity         = [-2.0, 2.0]   random::TwoDice,
+        angle_drag             = [0.0, 2.0]    random::TwoDice
     );
 
     let start_t = Instant::now();
