@@ -2,12 +2,20 @@
 //!
 //! A small example:
 //! ```ignore
+//! #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+//! enum Name {
+//!     Left,
+//!     Right,
+//!     // ...
+//! }
 //! fn main() {
 //!     let input = input::InputManager::new(sdl);
-//!     input.bind(input::Name::Left, input::Device::Key(input::KeycodeA));
+//!     input.bind(Name::Left, input::Device::Key(input::KeycodeA));
+//!
+//!     // main loop
 //!     loop {
-//!         /// ... In main loop
-//!         if input.pressed(input::Name::Left) {
+//!         // ...
+//!         if input.pressed(Name::Left) {
 //!             player_jump();
 //!         }
 //!     }
@@ -15,9 +23,6 @@
 //! ```
 //! Here we bind the "A" key to the input "Left", and tell the player to jump when the
 //! button is first pressed.
-//!
-//! For this to work the InputManager needs to be passed around everywhere it's used,
-//! and to use the rumble feature it needs to be mutable.
 
 pub use sdl2::controller::{Axis, Button};
 pub use sdl2::keyboard::Keycode;
