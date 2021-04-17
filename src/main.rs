@@ -3,8 +3,8 @@ use std::time::Instant;
 
 use crate::random::{Distribute, RandomProperty};
 
-mod random;
 mod input;
+mod random;
 mod renderer;
 
 fn main() {
@@ -51,7 +51,10 @@ fn main_loop(mut surface: GL33Surface) {
         input::Name::Quit,
     );
     input.bind(input::Device::Quit, input::Name::Quit);
-    input.bind(input::Device::Axis(0, input::Axis::LeftX), input::Name::Right);
+    input.bind(
+        input::Device::Axis(0, input::Axis::LeftX),
+        input::Name::Right,
+    );
     input.bind(input::Device::Axis(0, input::Axis::RightY), input::Name::Up);
 
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;

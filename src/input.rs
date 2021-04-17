@@ -19,15 +19,15 @@
 //! For this to work the InputManager needs to be passed around everywhere it's used,
 //! and to use the rumble feature it needs to be mutable.
 
-use luminance_sdl2::sdl2;
-use sdl2::event::{Event, WindowEvent};
-use std::collections::HashMap;
-
-use sdl2::{GameControllerSubsystem, Sdl};
-use sdl2::controller::GameController;
 pub use sdl2::controller::{Axis, Button};
 pub use sdl2::keyboard::Keycode;
 pub use sdl2::mouse::MouseButton;
+
+use luminance_sdl2::sdl2;
+use sdl2::controller::GameController;
+use sdl2::event::{Event, WindowEvent};
+use sdl2::{GameControllerSubsystem, Sdl};
+use std::collections::HashMap;
 
 /// All the different kinds of input device we can listen
 /// for.
@@ -166,7 +166,9 @@ impl InputManager {
         if let Some(controller) = self.opened_controllers.get_mut(&controller) {
             let lo = (lo * (u16::MAX as f32)) as u16;
             let hi = (hi * (u16::MAX as f32)) as u16;
-            controller.set_rumble(lo, hi, (time * 1000.0) as u32).unwrap();
+            controller
+                .set_rumble(lo, hi, (time * 1000.0) as u32)
+                .unwrap();
             Ok(())
         } else {
             Err(())
@@ -192,18 +194,12 @@ impl InputManager {
                     keycode: Some(keycode),
                     ..
                 } => (Device::Key(keycode), KeyState::Up(frame)),
-                Event::ControllerDeviceAdded {
-                    which,
-                    ..
-                } => {
+                Event::ControllerDeviceAdded { which, .. } => {
                     let controller = self.controllers.open(which).unwrap();
                     self.opened_controllers.insert(which, controller);
                     continue;
                 }
-                Event::ControllerDeviceRemoved {
-                    which,
-                    ..
-                } => {
+                Event::ControllerDeviceRemoved { which, .. } => {
                     self.opened_controllers.remove(&which).unwrap();
                     continue;
                 }
