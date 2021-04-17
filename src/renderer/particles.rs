@@ -1,4 +1,4 @@
-use super::{SpriteRegion, prelude::*};
+use super::{prelude::*, SpriteRegion};
 
 use sungod::Ra;
 

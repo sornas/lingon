@@ -22,6 +22,7 @@
 //! some things (like skewing) are harder to do.
 
 pub use crate::renderer::particles::ParticleSystem;
+
 use crate::renderer::particles::FrozenParticles;
 
 use cgmath::Vector2;
@@ -223,7 +224,6 @@ pub type RenderFn = dyn FnMut(
     cgmath::Matrix4<f32>,
     &mut GL33Surface,
 ) -> Result<(), ()>;
-
 
 /// From where you see the world. Can be moved around via [Transform].
 pub struct Camera {

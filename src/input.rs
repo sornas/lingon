@@ -24,9 +24,9 @@ pub use sdl2::keyboard::Keycode;
 pub use sdl2::mouse::MouseButton;
 
 use luminance_sdl2::sdl2;
-use sdl2::{GameControllerSubsystem, Sdl};
 use sdl2::controller::GameController;
 use sdl2::event::{Event, WindowEvent};
+use sdl2::{GameControllerSubsystem, Sdl};
 use std::collections::HashMap;
 use std::hash::Hash;
 
@@ -69,7 +69,8 @@ fn remap(value: i16) -> f32 {
 const TRIGGER_LIMIT: f32 = 0.1;
 
 impl<T> InputManager<T>
-    where T: Copy + Hash + Eq
+where
+    T: Copy + Hash + Eq,
 {
     pub fn new(sdl: &Sdl) -> Self {
         let controllers = sdl.game_controller().unwrap();
@@ -156,7 +157,9 @@ impl<T> InputManager<T>
         if let Some(controller) = self.opened_controllers.get_mut(&controller) {
             let lo = (lo * (u16::MAX as f32)) as u16;
             let hi = (hi * (u16::MAX as f32)) as u16;
-            controller.set_rumble(lo, hi, (time * 1000.0) as u32).unwrap();
+            controller
+                .set_rumble(lo, hi, (time * 1000.0) as u32)
+                .unwrap();
             Ok(())
         } else {
             Err(())
@@ -182,18 +185,12 @@ impl<T> InputManager<T>
                     keycode: Some(keycode),
                     ..
                 } => (Device::Key(keycode), KeyState::Up(frame)),
-                Event::ControllerDeviceAdded {
-                    which,
-                    ..
-                } => {
+                Event::ControllerDeviceAdded { which, .. } => {
                     let controller = self.controllers.open(which).unwrap();
                     self.opened_controllers.insert(which, controller);
                     continue;
                 }
-                Event::ControllerDeviceRemoved {
-                    which,
-                    ..
-                } => {
+                Event::ControllerDeviceRemoved { which, .. } => {
                     self.opened_controllers.remove(&which).unwrap();
                     continue;
                 }

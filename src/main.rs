@@ -53,10 +53,7 @@ fn main_loop(mut surface: GL33Surface) {
     input.bind(input::Device::Key(input::Keycode::D), Name::Right);
     input.bind(input::Device::Key(input::Keycode::W), Name::Up);
     input.bind(input::Device::Key(input::Keycode::S), Name::Down);
-    input.bind(
-        input::Device::Key(input::Keycode::Escape),
-        Name::Quit,
-    );
+    input.bind(input::Device::Key(input::Keycode::Escape), Name::Quit);
     input.bind(input::Device::Quit, Name::Quit);
     input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
     input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
