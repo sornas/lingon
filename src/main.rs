@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use std::path::Path;
 use std::time::Instant;
 
+use lingon::audio::Audio;
 use lingon::asset;
 use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
@@ -59,6 +60,9 @@ fn main_loop(mut surface: GL33Surface) {
     input.bind(input::Device::Quit, Name::Quit);
     input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
     input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
+
+    let audio = Audio::init(surface.sdl());
+    audio.resume();
 
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;
     'app: loop {
