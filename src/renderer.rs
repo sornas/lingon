@@ -348,7 +348,6 @@ impl Stamp for &mut Sprite {
 /// A piece of a SpriteSheet to render.
 type SpriteRegion = (f32, [f32; 4]);
 
-#[allow(dead_code)]
 impl Sprite {
     pub fn new(region: SpriteRegion) -> Self {
         Self {
@@ -363,8 +362,12 @@ impl Sprite {
 }
 
 impl Renderer {
+    /// Create a new Render instance.
     pub fn new(context: &mut GL33Surface, sampler: Sampler) -> Self {
         let back_buffer = context.back_buffer().unwrap();
+
+        // Setup shader programs.
+
         let mut sprite_program = context
             .new_shader_program::<VertexSemantics, (), ShaderInterface>()
             .from_strings(VS_STR, None, None, FS_STR)
@@ -378,8 +381,9 @@ impl Renderer {
             .ignore_warnings();
 
         let tex: Tex =
-            Texture::new(context, SPRITE_SHEET_SIZE, 0, sampler).expect("texture createtion!");
+            Texture::new(context, SPRITE_SHEET_SIZE, 0, sampler).expect("failed to create texture");
 
+        // This function draws the entire frame and is called continuously.
         let render_fn = move |instances: &[Instance],
                               systems: &[FrozenParticles],
                               tex: &mut Tex,
