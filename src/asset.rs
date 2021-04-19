@@ -2,12 +2,12 @@ use std::path::PathBuf;
 use std::time::SystemTime;
 
 #[derive(Clone, Debug)]
-pub struct Data {
+pub struct LoadedFile {
     pub file: PathBuf,
     pub last_modified: SystemTime,
 }
 
-impl Data {
+impl LoadedFile {
     pub fn new(file: PathBuf) -> (Self, Vec<u8>) {
         let last_modified = std::fs::metadata(&file)
             .expect(&format!("asset file {} not found", file.display()))
@@ -47,12 +47,12 @@ pub struct Image {
     pub width: usize,
     pub height: usize,
     pub texture_data: Vec<u8>,
-    pub data: Data,
+    pub data: LoadedFile,
 }
 
 impl Image {
     pub fn new(file: PathBuf) -> Self {
-        let (data, bytes) = Data::new(file);
+        let (data, bytes) = LoadedFile::new(file);
         let mut ret = Self {
             width: 0,
             height: 0,
