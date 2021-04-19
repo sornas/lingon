@@ -2,12 +2,20 @@
 //!
 //! A small example:
 //! ```ignore
+//! #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+//! enum Name {
+//!     Left,
+//!     Right,
+//!     // ...
+//! }
 //! fn main() {
 //!     let input = input::InputManager::new(sdl);
-//!     input.bind(input::Name::Left, input::Device::Key(input::KeycodeA));
+//!     input.bind(Name::Left, input::Device::Key(input::KeycodeA));
+//!
+//!     // main loop
 //!     loop {
-//!         /// ... In main loop
-//!         if input.pressed(input::Name::Left) {
+//!         // ...
+//!         if input.pressed(Name::Left) {
 //!             player_jump();
 //!         }
 //!     }
@@ -28,6 +36,7 @@ use sdl2::controller::GameController;
 use sdl2::event::{Event, WindowEvent};
 use sdl2::{GameControllerSubsystem, Sdl};
 use std::collections::HashMap;
+use std::hash::Hash;
 
 /// All the different kinds of input device we can listen
 /// for.
@@ -41,16 +50,6 @@ pub enum Device {
     Axis(u32, Axis),
 }
 
-/// A list of all valid inputs, you are expected to change this.
-#[derive(Hash, Copy, Clone, Debug, Eq, PartialEq)]
-pub enum Name {
-    Left,
-    Right,
-    Up,
-    Down,
-    Quit,
-}
-
 #[derive(Copy, Clone, Debug)]
 enum KeyState {
     Down(usize),
@@ -59,11 +58,11 @@ enum KeyState {
 }
 
 /// The one stop shop for all things input!
-pub struct InputManager {
+pub struct InputManager<T> {
     frame: usize,
     controllers: GameControllerSubsystem,
-    physical_inputs: HashMap<Device, Name>,
-    virtual_inputs: HashMap<Name, KeyState>,
+    physical_inputs: HashMap<Device, T>,
+    virtual_inputs: HashMap<T, KeyState>,
     opened_controllers: HashMap<u32, GameController>,
 }
 
@@ -77,7 +76,10 @@ fn remap(value: i16) -> f32 {
 /// When an analog signal becomes digital.
 const TRIGGER_LIMIT: f32 = 0.1;
 
-impl InputManager {
+impl<T> InputManager<T>
+where
+    T: Copy + Hash + Eq,
+{
     pub fn new(sdl: &Sdl) -> Self {
         let controllers = sdl.game_controller().unwrap();
         controllers.set_event_state(true);
@@ -92,14 +94,13 @@ impl InputManager {
     }
 
     /// Creates a new binding to listen to.
-    pub fn bind(&mut self, device: Device, name: Name) {
+    pub fn bind(&mut self, device: Device, name: T) {
         self.physical_inputs.insert(device, name);
         self.virtual_inputs.insert(name, KeyState::Up(0));
     }
 
-    #[allow(dead_code)]
     /// Check if the input is down this frame.
-    pub fn down(&self, name: Name) -> bool {
+    pub fn down(&self, name: T) -> bool {
         match self.virtual_inputs.get(&name) {
             Some(KeyState::Down(_)) => true,
             Some(KeyState::Up(_)) => false,
@@ -111,9 +112,8 @@ impl InputManager {
         }
     }
 
-    #[allow(dead_code)]
     /// Check if the input is inactive.
-    pub fn up(&self, name: Name) -> bool {
+    pub fn up(&self, name: T) -> bool {
         match self.virtual_inputs.get(&name) {
             Some(KeyState::Down(_)) => false,
             Some(KeyState::Up(_)) => true,
@@ -126,7 +126,7 @@ impl InputManager {
     }
 
     /// Check if the input is pressed this frame.
-    pub fn pressed(&self, name: Name) -> bool {
+    pub fn pressed(&self, name: T) -> bool {
         match self.virtual_inputs.get(&name) {
             Some(KeyState::Down(frame)) => self.frame == *frame,
             _ => {
@@ -136,9 +136,8 @@ impl InputManager {
         }
     }
 
-    #[allow(dead_code)]
     /// Check if the input was released this frame.
-    pub fn released(&self, name: Name) -> bool {
+    pub fn released(&self, name: T) -> bool {
         match self.virtual_inputs.get(&name) {
             Some(KeyState::Up(frame)) => self.frame == *frame,
             _ => {
@@ -149,7 +148,7 @@ impl InputManager {
     }
 
     /// Returns the inputs as analog signals.
-    pub fn value(&self, name: Name) -> f32 {
+    pub fn value(&self, name: T) -> f32 {
         match self.virtual_inputs.get(&name) {
             Some(KeyState::Up(_)) => 0.0,
             Some(KeyState::Down(_)) => 1.0,
