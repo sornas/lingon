@@ -9,8 +9,13 @@ pub struct Data {
 
 impl Data {
     pub fn new(file: PathBuf) -> (Self, Vec<u8>) {
-        let last_modified = std::fs::metadata(&file).expect(&format!("asset file {} not found", file.display())).modified().ok().unwrap_or_else(SystemTime::now);
-        let bytes = std::fs::read(&file).expect(&format!("asset file {} not found", file.display()));
+        let last_modified = std::fs::metadata(&file)
+            .expect(&format!("asset file {} not found", file.display()))
+            .modified()
+            .ok()
+            .unwrap_or_else(SystemTime::now);
+        let bytes = std::fs::read(&file)
+            .expect(&format!("asset file {} not found", file.display()));
         (
             Self {
                 file,
