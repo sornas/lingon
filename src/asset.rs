@@ -1,5 +1,7 @@
+mod audio;
 mod image;
 
+pub use audio::Audio;
 pub use image::Image;
 
 use std::path::PathBuf;
