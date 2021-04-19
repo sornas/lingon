@@ -6,7 +6,7 @@ use sungod::Ra;
 use crate::random::{RandomProperty, Uniform};
 
 /// Creates a particle system.
-/// 
+///
 /// A shorthand for struct initialization. Compare the following:
 /// ```
 /// let particle_system = ParticleSystem {
