@@ -1,7 +1,9 @@
 use luminance_sdl2::GL33Surface;
 use std::f32::consts::PI;
+use std::path::Path;
 use std::time::Instant;
 
+use lingon::asset;
 use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
 
@@ -28,9 +30,8 @@ fn main_loop(mut surface: GL33Surface) {
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
 
-    let (w, h, image) = load_image_from_memory(include_bytes!("../res/coin.png")).unwrap();
-    let builder = SpriteSheetBuilder::new(w as usize, h as usize, image).tile_size(16, 16);
-    let sheet = renderer.add_sprite_sheet(builder);
+    let image = asset::Image::new(Path::new("res/coin-gold.png").to_path_buf());
+    let sheet = renderer.add_sprite_sheet(image, (16, 16));
 
     let mut particle_system = lingon::particle_system!(
         lifetime       = [1.0, 2.0]    random::TwoDice,
@@ -77,7 +78,8 @@ fn main_loop(mut surface: GL33Surface) {
         }
         particle_system.update(delta);
 
-        let region = sheet.grid([0, 1, 2, 3, 2, 1][((t * 10.0) as usize) % 6], 0);
+        let region =
+            renderer.sprite_sheets[sheet].grid([0, 1, 2, 3, 2, 1][((t * 10.0) as usize) % 6], 0);
         for x in -5..5 {
             for y in -5..5 {
                 renderer.push(
@@ -108,6 +110,8 @@ fn main_loop(mut surface: GL33Surface) {
             (input.value(Name::Right) - input.value(Name::Left)) * delta,
             (input.value(Name::Up) - input.value(Name::Down)) * delta,
         );
+
+        renderer.reload();
 
         if renderer.render(&mut surface).is_err() {
             break 'app;

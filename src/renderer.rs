@@ -23,6 +23,7 @@
 
 pub use crate::renderer::particles::ParticleSystem;
 
+use crate::asset::{Image, Pixels};
 use crate::renderer::particles::FrozenParticles;
 
 use cgmath::Vector2;
@@ -39,6 +40,11 @@ mod prelude;
 
 // Me no likey, but at least it's not documented.
 use crate::renderer::prelude::*;
+
+pub type SpriteSheetID = usize;
+
+/// Type used to simplify some types.
+pub type Tex = Texture<<GL33Surface as GraphicsContext>::Backend, Dim3, NormRGBA8UI>;
 
 /// Vertex shader source code.
 const VS_STR: &str = include_str!("vs.glsl");
@@ -60,66 +66,41 @@ const RECT: [Vertex; 6] = [
     Vertex::new(VPosition::new([-0.5, -0.5])),
 ];
 
-/// Wraps the construction of a SpriteSheet.
-//
-// I have some ideas of typing this harder to make sure
-// you place a tile dimension on it. #CatchThoseMistakes
-//
-// The struct might also be useless, and we could easily just
-// give out a SpriteSheet directly.
+/// A sprite sheet that lives on the GPU.
 #[derive(Clone, Debug)]
-pub struct SpriteSheetBuilder {
-    pub image: Vec<u8>,
-    pub image_dim: (Pixels, Pixels),
-    pub tile_dim: Option<(Pixels, Pixels)>,
-}
-
-/// A marker type for the unit pixels.
-pub type Pixels = usize;
-
-impl SpriteSheetBuilder {
-    pub fn new(width: Pixels, height: Pixels, image: Vec<u8>) -> Self {
-        Self {
-            image,
-            image_dim: (width, height),
-            tile_dim: None,
-        }
-    }
-
-    pub fn tile_size(mut self, tile_width: Pixels, tile_height: Pixels) -> Self {
-        self.tile_dim = Some((tile_width, tile_height));
-        self
-    }
-}
-
-/// A light reference to a SpriteSheet that lives on the GPU.
-#[derive(Clone, Copy, Debug)]
 pub struct SpriteSheet {
     id: usize,
-    image_dim: (Pixels, Pixels),
-    tile_dim: Option<(Pixels, Pixels)>,
+    image: Image,
+    tile_size: (Pixels, Pixels),
 }
 
 impl SpriteSheet {
     /// Returns the SpriteRegion of a tile given the specified tile sizes,
     /// starting from the top left.
     pub fn grid(&self, tx: usize, ty: usize) -> SpriteRegion {
-        if let Some(tile_dim) = self.tile_dim {
-            let xlo = ((tile_dim.0 * tx) as f32) / (SPRITE_SHEET_SIZE[0] as f32);
-            let ylo = ((tile_dim.1 * ty) as f32) / (SPRITE_SHEET_SIZE[1] as f32);
-            let w = (tile_dim.0 as f32) / (SPRITE_SHEET_SIZE[0] as f32);
-            let h = (tile_dim.1 as f32) / (SPRITE_SHEET_SIZE[1] as f32);
-            (
-                self.id as f32 / (SPRITE_SHEET_SIZE[2] as f32),
-                [xlo, ylo, xlo + w, ylo + h],
-            )
-        } else {
-            // TODO(ed): We could potentially catch this as a type error
-            // using the SpriteSheet as an enum?
-            // TODO(ed):
-            // We could also find grid slices that are out of bounds,
-            // if we checked the image dimension.
-            panic!();
+        let xlo = ((self.tile_size.0 * tx) as f32) / (SPRITE_SHEET_SIZE[0] as f32);
+        let ylo = ((self.tile_size.1 * ty) as f32) / (SPRITE_SHEET_SIZE[1] as f32);
+        let w = (self.tile_size.0 as f32) / (SPRITE_SHEET_SIZE[0] as f32);
+        let h = (self.tile_size.1 as f32) / (SPRITE_SHEET_SIZE[1] as f32);
+        (
+            self.id as f32 / (SPRITE_SHEET_SIZE[2] as f32),
+            [xlo, ylo, xlo + w, ylo + h],
+        )
+    }
+
+    pub fn upload(&self, tex: &mut Tex) {
+        tex.upload_part_raw(
+            GenMipmaps::No,
+            [0, 0, self.id as u32],
+            [self.image.width as u32, self.image.height as u32, 1],
+            &self.image.texture_data,
+        )
+        .unwrap();
+    }
+
+    pub fn reload(&mut self, tex: &mut Tex) {
+        if self.image.reload() {
+            self.upload(tex);
         }
     }
 }
@@ -214,8 +195,6 @@ pub trait Tint {
     }
 }
 
-/// Type used to simplify some types.
-pub type Tex = Texture<<GL33Surface as GraphicsContext>::Backend, Dim3, NormRGBA8UI>;
 /// A function that renders.
 pub type RenderFn = dyn FnMut(
     &[Instance],
@@ -371,7 +350,6 @@ impl Stamp for &mut Sprite {
 /// A piece of a SpriteSheet to render.
 type SpriteRegion = (f32, [f32; 4]);
 
-#[allow(dead_code)]
 impl Sprite {
     pub fn new(region: SpriteRegion) -> Self {
         Self {
@@ -385,38 +363,13 @@ impl Sprite {
     }
 }
 
-// TODO(ed): This should return an image type, so we can separate bytes
-// from an image.
-/// A fast and easy way to convert bytes to an image.
-pub fn load_image_from_memory(bytes: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
-    // SAFETY: stbi either succeeds or returns a null pointer
-    let mut w: i32 = 0;
-    let mut h: i32 = 0;
-    let mut comp: i32 = 4;
-    unsafe {
-        use stb_image::stb_image::bindgen::*;
-        stbi_set_flip_vertically_on_load(1);
-        let image = stbi_load_from_memory(
-            bytes.as_ptr(),
-            bytes.len() as i32,
-            &mut w,
-            &mut h,
-            &mut comp,
-            4,
-        );
-        if image.is_null() {
-            None
-        } else {
-            let image =
-                Vec::from_raw_parts(image as *mut u8, (w * h * 4) as usize, (w * h * 4) as usize);
-            Some((w as u32, h as u32, image))
-        }
-    }
-}
-
 impl Renderer {
+    /// Create a new Render instance.
     pub fn new(context: &mut GL33Surface, sampler: Sampler) -> Self {
         let back_buffer = context.back_buffer().unwrap();
+
+        // Setup shader programs.
+
         let mut sprite_program = context
             .new_shader_program::<VertexSemantics, (), ShaderInterface>()
             .from_strings(VS_STR, None, None, FS_STR)
@@ -430,8 +383,9 @@ impl Renderer {
             .ignore_warnings();
 
         let tex: Tex =
-            Texture::new(context, SPRITE_SHEET_SIZE, 0, sampler).expect("texture createtion!");
+            Texture::new(context, SPRITE_SHEET_SIZE, 0, sampler).expect("failed to create texture");
 
+        // This function draws the entire frame and is called continuously.
         let render_fn = move |instances: &[Instance],
                               systems: &[FrozenParticles],
                               tex: &mut Tex,
@@ -520,29 +474,32 @@ impl Renderer {
         self.particles.push(system.freeze());
     }
 
-    /// Takes the SpriteSheetBuilder and generates a new SpriteSheet.
+    /// Registers an image as a new sprite sheet with the specified tile size.
+    ///
     /// There's a hard limit on the number of SpriteSheets that can be
     /// added: see [SPRITE_SHEET_SIZE].
-    pub fn add_sprite_sheet(&mut self, builder: SpriteSheetBuilder) -> SpriteSheet {
+    pub fn add_sprite_sheet(&mut self, image: Image, tile_size: (Pixels, Pixels)) -> SpriteSheetID {
         let id = self.sprite_sheets.len();
         assert!((id as u32) < SPRITE_SHEET_SIZE[2]);
 
-        self.tex
-            .upload_part_raw(
-                GenMipmaps::No,
-                [0, 0, id as u32],
-                [builder.image_dim.0 as u32, builder.image_dim.1 as u32, 1],
-                &builder.image,
-            )
-            .unwrap();
         // Upload texture to slot
         let sheet = SpriteSheet {
             id,
-            image_dim: builder.image_dim,
-            tile_dim: builder.tile_dim,
+            image,
+            tile_size,
         };
+        sheet.upload(&mut self.tex);
         self.sprite_sheets.push(sheet);
-        sheet
+        id
+    }
+
+    /// Reload all assets that the renderer owns.
+    ///
+    /// Currently this means as sprite sheets.
+    pub fn reload(&mut self) {
+        for sheet in self.sprite_sheets.iter_mut() {
+            sheet.reload(&mut self.tex);
+        }
     }
 
     pub fn render(&mut self, context: &mut GL33Surface) -> Result<(), ()> {

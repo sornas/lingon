@@ -32,9 +32,9 @@ pub use sdl2::keyboard::Keycode;
 pub use sdl2::mouse::MouseButton;
 
 use luminance_sdl2::sdl2;
+use sdl2::{GameControllerSubsystem, Sdl};
 use sdl2::controller::GameController;
 use sdl2::event::{Event, WindowEvent};
-use sdl2::{GameControllerSubsystem, Sdl};
 use std::collections::HashMap;
 use std::hash::Hash;
 
