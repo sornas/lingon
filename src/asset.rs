@@ -31,20 +31,19 @@ impl LoadedFile {
     /// Modification is checked using [std::fs::metadata] and as such might not work on all
     /// operating systems.
     pub fn reload(&mut self) -> Option<Vec<u8>> {
-        match std::fs::metadata(&self.file).ok().map(|m| m.modified().ok()).flatten() {
-            Some(last_modified) if last_modified != self.last_modified => {
-                if cfg!(debug_assertions) {
-                    let bytes = std::fs::read(&self.file).ok();
-                    if bytes.is_some() {
-                        self.last_modified = last_modified;
-                    }
-                    bytes
-                } else {
-                    eprintln!("Ignoring reload of file: {}", &self.file.display());
-                    None
+        if cfg!(debug_assertions) {
+            match std::fs::metadata(&self.file).ok().map(|m| m.modified().ok()).flatten() {
+                Some(last_modified) if last_modified != self.last_modified => {
+                        let bytes = std::fs::read(&self.file).ok();
+                        if bytes.is_some() {
+                            self.last_modified = last_modified;
+                        }
+                        bytes
                 }
+                _ => None,
             }
-            _ => None,
+        } else {
+            None
         }
     }
 }
