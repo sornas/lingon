@@ -487,6 +487,9 @@ impl Renderer {
         id
     }
 
+    /// Reload all assets that the renderer owns.
+    ///
+    /// Currently this means as sprite sheets.
     pub fn reload(&mut self) {
         for sheet in self.sprite_sheets.iter_mut() {
             sheet.reload(&mut self.tex);
