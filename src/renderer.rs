@@ -21,9 +21,9 @@
 //! [instancing](https://www.khronos.org/opengl/wiki/Vertex_Rendering#Instancing),
 //! some things (like skewing) are harder to do.
 
-pub use crate::renderer::particles::ParticleSystem;
 use crate::asset::{Image, Pixels};
 use crate::renderer::particles::FrozenParticles;
+pub use crate::renderer::particles::ParticleSystem;
 
 use cgmath::Vector2;
 use luminance::context::GraphicsContext;
@@ -88,14 +88,13 @@ impl SpriteSheet {
     }
 
     pub fn upload(&self, tex: &mut Tex) {
-        tex
-            .upload_part_raw(
-                GenMipmaps::No,
-                [0, 0, self.id as u32],
-                [self.image.width as u32, self.image.height as u32, 1],
-                &self.image.texture_data,
-            )
-            .unwrap();
+        tex.upload_part_raw(
+            GenMipmaps::No,
+            [0, 0, self.id as u32],
+            [self.image.width as u32, self.image.height as u32, 1],
+            &self.image.texture_data,
+        )
+        .unwrap();
     }
 
     pub fn reload(&mut self, tex: &mut Tex) {
@@ -203,7 +202,6 @@ pub type RenderFn = dyn FnMut(
     cgmath::Matrix4<f32>,
     &mut GL33Surface,
 ) -> Result<(), ()>;
-
 
 /// From where you see the world. Can be moved around via [Transform].
 pub struct Camera {

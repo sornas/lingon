@@ -52,7 +52,10 @@ fn main_loop(mut surface: GL33Surface) {
         input::Name::Quit,
     );
     input.bind(input::Device::Quit, input::Name::Quit);
-    input.bind(input::Device::Axis(0, input::Axis::LeftX), input::Name::Right);
+    input.bind(
+        input::Device::Axis(0, input::Axis::LeftX),
+        input::Name::Right,
+    );
     input.bind(input::Device::Axis(0, input::Axis::RightY), input::Name::Up);
 
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;
@@ -73,7 +76,8 @@ fn main_loop(mut surface: GL33Surface) {
         }
         particle_systems.update(delta);
 
-        let region = renderer.sprite_sheets[sheet].grid([0, 1, 2, 3, 2, 1][((t * 10.0) as usize) % 6], 0);
+        let region =
+            renderer.sprite_sheets[sheet].grid([0, 1, 2, 3, 2, 1][((t * 10.0) as usize) % 6], 0);
         for x in -5..5 {
             for y in -5..5 {
                 renderer.push(

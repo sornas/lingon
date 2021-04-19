@@ -15,14 +15,14 @@ impl LoadedFile {
             .modified()
             .ok()
             .unwrap_or_else(SystemTime::now);
-        let bytes = std::fs::read(&file)
-            .expect(&format!("asset file {} not found", file.display()));
+        let bytes =
+            std::fs::read(&file).expect(&format!("asset file {} not found", file.display()));
         (
             Self {
                 file,
                 last_modified,
             },
-            bytes
+            bytes,
         )
     }
 
@@ -32,13 +32,17 @@ impl LoadedFile {
     /// operating systems.
     pub fn reload(&mut self) -> Option<Vec<u8>> {
         if cfg!(debug_assertions) {
-            match std::fs::metadata(&self.file).ok().map(|m| m.modified().ok()).flatten() {
+            match std::fs::metadata(&self.file)
+                .ok()
+                .map(|m| m.modified().ok())
+                .flatten()
+            {
                 Some(last_modified) if last_modified != self.last_modified => {
-                        let bytes = std::fs::read(&self.file).ok();
-                        if bytes.is_some() {
-                            self.last_modified = last_modified;
-                        }
-                        bytes
+                    let bytes = std::fs::read(&self.file).ok();
+                    if bytes.is_some() {
+                        self.last_modified = last_modified;
+                    }
+                    bytes
                 }
                 _ => None,
             }
@@ -97,7 +101,11 @@ impl Image {
                 &mut comp,
                 4,
             );
-            self.texture_data = Vec::from_raw_parts(stb_image as *mut u8, (w * h * 4) as usize, (w * h * 4) as usize);
+            self.texture_data = Vec::from_raw_parts(
+                stb_image as *mut u8,
+                (w * h * 4) as usize,
+                (w * h * 4) as usize,
+            );
         }
         self.width = w as usize;
         self.height = h as usize;
