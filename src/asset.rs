@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::time::SystemTime;
 
+/// A file on disk that has been loaded.
 #[derive(Clone, Debug)]
 pub struct LoadedFile {
     pub file: PathBuf,
@@ -25,6 +26,10 @@ impl LoadedFile {
         )
     }
 
+    /// Return the file data if it has been modified since it was last read.
+    ///
+    /// Modification is checked using [std::fs::metadata] and as such might not work on all
+    /// operating systems.
     pub fn reload(&mut self) -> Option<Vec<u8>> {
         match std::fs::metadata(&self.file).ok().map(|m| m.modified().ok()).flatten() {
             Some(last_modified) if last_modified != self.last_modified => {
