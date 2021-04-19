@@ -40,6 +40,11 @@ mod prelude;
 // Me no likey, but at least it's not documented.
 use crate::renderer::prelude::*;
 
+pub type SpriteSheetID = usize;
+
+/// Type used to simplify some types.
+pub type Tex = Texture<<GL33Surface as GraphicsContext>::Backend, Dim3, NormRGBA8UI>;
+
 /// Vertex shader source code.
 const VS_STR: &str = include_str!("vs.glsl");
 /// Fragment shader source code.
@@ -190,8 +195,6 @@ pub trait Tint {
     }
 }
 
-/// Type used to simplify some types.
-pub type Tex = Texture<<GL33Surface as GraphicsContext>::Backend, Dim3, NormRGBA8UI>;
 /// A function that renders.
 pub type RenderFn = dyn FnMut(
     &[Instance],
@@ -476,7 +479,7 @@ impl Renderer {
     ///
     /// There's a hard limit on the number of SpriteSheets that can be
     /// added: see [SPRITE_SHEET_SIZE].
-    pub fn add_sprite_sheet(&mut self, image: Image, tile_size: (Pixels, Pixels)) -> usize {
+    pub fn add_sprite_sheet(&mut self, image: Image, tile_size: (Pixels, Pixels)) -> SpriteSheetID {
         let id = self.sprite_sheets.len();
         assert!((id as u32) < SPRITE_SHEET_SIZE[2]);
 
