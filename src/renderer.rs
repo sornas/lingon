@@ -472,7 +472,7 @@ impl Renderer {
         self.particles.push(system.freeze());
     }
 
-    /// Adds an image as a sprite sheet with the specified tile size.
+    /// Registers an image as a new sprite sheet with the specified tile size.
     ///
     /// There's a hard limit on the number of SpriteSheets that can be
     /// added: see [SPRITE_SHEET_SIZE].
