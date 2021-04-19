@@ -38,8 +38,8 @@ pub enum VertexSemantics {
     #[sem(name = "angle_info", repr = "[f32; 3]", wrapper = "PAngleInfo")]
     PAngleInfo,
 
-    #[sem(name = "scale_extrems", repr = "[f32; 4]", wrapper = "PScaleExtrems")]
-    PScaleExtrems,
+    #[sem(name = "scale_extrems", repr = "[f32; 4]", wrapper = "PScaleExtremes")]
+    PScaleExtremes,
 
     #[sem(name = "start_color", repr = "[f32; 4]", wrapper = "PStartColor")]
     PStartColor,
@@ -85,7 +85,7 @@ pub struct Particle {
 
     pub angle_info: PAngleInfo,
 
-    pub scale_extrems: PScaleExtrems,
+    pub scale_extremes: PScaleExtremes,
 
     pub start_color: PStartColor,
     pub end_color: PEndColor,

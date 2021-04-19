@@ -10,7 +10,7 @@
 //!         .scale(0.1, 2.0)
 //!     );
 //!
-//!     renderer.renderer(&mut context).unwrap();
+//!     renderer.render(&mut context).unwrap();
 //! }
 //! ```
 //!

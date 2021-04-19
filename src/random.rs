@@ -16,9 +16,9 @@ impl Default for RandomProperty {
 }
 
 impl RandomProperty {
-    pub fn new(lo: f32, hi: f32) -> Self {
+    pub fn new(lo: f32, hi: f32, distribution: Box<dyn Distribute>) -> Self {
         Self {
-            distribution: Box::new(ThreeDice),
+            distribution,
             range: [lo, hi],
         }
     }
@@ -30,7 +30,7 @@ impl RandomProperty {
 }
 
 pub trait Distribute {
-    /// Get a random value.
+    /// Get a random value between 0.0 and 1.0.
     fn sample(&self) -> f32;
 }
 

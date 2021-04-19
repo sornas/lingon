@@ -1,13 +1,42 @@
 use super::{prelude::*, SpriteRegion};
 
+use std::f32::consts::PI;
 use sungod::Ra;
 
-use crate::random::RandomProperty;
+use crate::random::{RandomProperty, Uniform};
 
-/// An actual particle system. Contains a lot of
-/// knobs.
+/// Creates a particle system.
 ///
-/// Particles are rendered only on the GPU and as such are 'almost' free.
+/// A shorthand for struct initialization. Compare the following:
+/// ```
+/// let particle_system = ParticleSystem {
+///     lifetime:      RandomProperty::new(1.0, 2.0,  Box::new(Uniform)),
+///     vel_magnitude: RandomProperty::new(-2.0, 2.0, Box::new(Uniform)),
+///     // ...
+///     ..ParticleSystem::new()
+/// }
+///
+/// let particle_system = particle_system!(
+///     lifetime     = [1.0, 2.0]  Uniform,
+///     vel_magnitue = [-2.0, 2.0] Uniform,
+///     // ...
+/// );
+/// ```
+#[macro_export]
+macro_rules! particle_system {
+    ($($field:ident = [ $lower:expr , $upper:expr ] $distribution:expr ),* $(, )? ) => {
+        ParticleSystem {
+            $(
+                $field: RandomProperty::new($lower, $upper, Box::new($distribution))
+            ),* ,
+            ..ParticleSystem::new()
+        }
+    };
+}
+
+/// An actual particle system. Contains a lot of knobs.
+///
+/// Particles are rendered only on the GPU and as such are _almost_ free.
 #[derive(Default)]
 pub struct ParticleSystem {
     pub time: f32,
@@ -29,14 +58,14 @@ pub struct ParticleSystem {
 
     // TODO(ed): Options for how this is selected
     /// The angle of the velocity in radians.
-    pub v_angle: RandomProperty,
+    pub vel_angle: RandomProperty,
     /// How fast a particle should move when it spawns.
-    pub v_magnitude: RandomProperty,
+    pub vel_magnitude: RandomProperty,
 
     /// What direction to accelerate in.
-    pub acceleration_angle: RandomProperty,
+    pub acc_angle: RandomProperty,
     /// How strong the acceleration is in that direction.
-    pub acceleration_magnitude: RandomProperty,
+    pub acc_magnitude: RandomProperty,
 
     /// A fake 'air-resistance'. Lower values mean less resistance.
     /// Negative values give energy over time.
@@ -85,15 +114,14 @@ impl ParticleSystem {
             time: 0.0,
             particles: Vec::new(),
 
-            x: RandomProperty::new(-0.1, 0.1),
-            y: RandomProperty::new(-0.1, 0.1),
+            x: RandomProperty::new(-0.1, 0.1, Box::new(Uniform)),
+            y: RandomProperty::new(-0.1, 0.1, Box::new(Uniform)),
 
-            v_angle: RandomProperty::new(0.0, 2.0 * std::f32::consts::PI),
+            vel_angle: RandomProperty::new(0.0, 2.0 * PI, Box::new(Uniform)),
+            acc_angle: RandomProperty::new(0.0, 2.0 * PI, Box::new(Uniform)),
 
-            acceleration_angle: RandomProperty::new(0.0, 2.0 * std::f32::consts::PI),
-
-            start_sx: RandomProperty::new(1.0, 1.0),
-            start_sy: RandomProperty::new(1.0, 1.0),
+            start_sx: RandomProperty::new(1.0, 1.0, Box::new(Uniform)),
+            start_sy: RandomProperty::new(1.0, 1.0, Box::new(Uniform)),
 
             ..Self::default()
         }
@@ -111,11 +139,11 @@ impl ParticleSystem {
 
     /// Spawns a new particle.
     pub fn spawn(&mut self) {
-        let velocity_angle = self.v_angle.sample();
-        let velocity_magnitude = self.v_magnitude.sample();
+        let vel_angle = self.vel_angle.sample();
+        let vel_magnitude = self.vel_magnitude.sample();
 
-        let acceleration_angle = self.acceleration_angle.sample();
-        let acceleration_magnitude = self.acceleration_magnitude.sample();
+        let acc_angle = self.acc_angle.sample();
+        let acc_magnitude = self.acc_magnitude.sample();
 
         let (sheet, uv) = if self.sprites.is_empty() {
             &(-1.0, [0.0, 0.0, 0.0, 0.0])
@@ -134,12 +162,12 @@ impl ParticleSystem {
                 self.y.sample() + self.position[1],
             ]),
             velocity: PVelocity::new([
-                velocity_angle.cos() * velocity_magnitude,
-                velocity_angle.sin() * velocity_magnitude,
+                vel_angle.cos() * vel_magnitude,
+                vel_angle.sin() * vel_magnitude,
             ]),
             acceleration: PAcceleration::new([
-                acceleration_angle.cos() * acceleration_magnitude,
-                acceleration_angle.sin() * acceleration_magnitude,
+                acc_angle.cos() * acc_magnitude,
+                acc_angle.sin() * acc_magnitude,
             ]),
             drag: PDrag::new(self.drag.sample()),
 
@@ -149,7 +177,7 @@ impl ParticleSystem {
                 self.angle_drag.sample(),
             ]),
 
-            scale_extrems: PScaleExtrems::new([
+            scale_extremes: PScaleExtremes::new([
                 self.start_sx.sample(),
                 self.start_sy.sample(),
                 self.end_sx.sample(),
