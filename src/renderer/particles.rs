@@ -7,7 +7,7 @@ use crate::random::{RandomProperty, Uniform};
 
 /// Creates a particle system.
 /// 
-/// Basically a shorthand for struct initialization. Compare the following:
+/// A shorthand for struct initialization. Compare the following:
 /// ```
 /// let particle_system = ParticleSystem {
 ///     lifetime:      RandomProperty::new(1.0, 2.0,  Box::new(Uniform)),
