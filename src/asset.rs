@@ -49,8 +49,8 @@ pub type Pixels = usize;
 
 #[derive(Clone, Debug)]
 pub struct Image {
-    pub width: usize,
-    pub height: usize,
+    pub width: Pixels,
+    pub height: Pixels,
     pub texture_data: Vec<u8>,
     pub data: LoadedFile,
 }
