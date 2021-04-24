@@ -9,16 +9,20 @@ use crate::random::{RandomProperty, Uniform};
 ///
 /// A shorthand for struct initialization. Compare the following:
 /// ```
+/// use lingon::particle_system;
+/// use lingon::renderer::ParticleSystem;
+/// use lingon::random::{RandomProperty, Uniform};
+///
 /// let particle_system = ParticleSystem {
 ///     lifetime:      RandomProperty::new(1.0, 2.0,  Box::new(Uniform)),
 ///     vel_magnitude: RandomProperty::new(-2.0, 2.0, Box::new(Uniform)),
 ///     // ...
 ///     ..ParticleSystem::new()
-/// }
+/// };
 ///
 /// let particle_system = particle_system!(
 ///     lifetime     = [1.0, 2.0]  Uniform,
-///     vel_magnitue = [-2.0, 2.0] Uniform,
+///     vel_magnitude = [-2.0, 2.0] Uniform,
 ///     // ...
 /// );
 /// ```

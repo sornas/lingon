@@ -14,6 +14,7 @@
 //!
 //!     // main loop
 //!     loop {
+//!         input.poll(sdl);
 //!         // ...
 //!         if input.pressed(Name::Left) {
 //!             player_jump();
