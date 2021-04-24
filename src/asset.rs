@@ -10,6 +10,44 @@ use std::time::SystemTime;
 /// A marker type for the unit pixels.
 pub type Pixels = usize;
 
+pub struct ImageAssetID(usize);
+
+pub struct AudioAssetID(usize);
+
+/// If the type of asset is unknown or doesn't matter.
+pub enum AssetID {
+    Image(ImageAssetID),
+    Audio(AudioAssetID),
+}
+
+pub struct AssetSystem {
+    images: Vec<Image>,
+    audio: Vec<Audio>,
+}
+
+impl AssetSystem {
+    pub fn new() -> Self {
+        Self {
+            images: Vec::new(),
+            audio: Vec::new(),
+        }
+    }
+
+    /// Load a new image from disk.
+    pub fn load_image(&mut self, file: PathBuf) -> ImageAssetID {
+        let id = self.images.len();
+        self.images.push(Image::new(file));
+        ImageAssetID(id)
+    }
+
+    /// Load a new sound from disk.
+    pub fn load_audio(&mut self, file: PathBuf) -> AudioAssetID {
+        let id = self.audio.len();
+        self.audio.push(Audio::new(file));
+        AudioAssetID(id)
+    }
+}
+
 /// A file on disk that has been loaded.
 #[derive(Clone, Debug)]
 pub struct LoadedFile {
