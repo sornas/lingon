@@ -10,11 +10,13 @@ use std::time::SystemTime;
 /// A marker type for the unit pixels.
 pub type Pixels = usize;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageAssetID(usize);
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AudioAssetID(usize);
 
-/// If the type of asset is unknown or doesn't matter.
+/// If the type of asset type is unknown or doesn't matter.
 pub enum AssetID {
     Image(ImageAssetID),
     Audio(AudioAssetID),
@@ -45,6 +47,39 @@ impl AssetSystem {
         let id = self.audio.len();
         self.audio.push(Audio::new(file));
         AudioAssetID(id)
+    }
+}
+
+/// Gets an asset from the asset system.
+///
+/// While this might look a bit bloated, it accomplishes two things.
+///
+/// 1) You can only get (e.g.) an [Image] from an [ImageAssetID].
+/// 2) You can always `get` the asset, regardless of its type. Otherwise you'd have
+/// `assets.image(image)`
+// This might in the future be solvable with generic associated types. Something like:
+//
+// impl<'a> Index<ImageAssetID> for AssetSystem {
+//     type Output = Option<&'a Image>;
+// 
+//     fn index(&'a self, id: ImageAssetID) -> &Self::Output {
+//         self.images.get(id.0)
+//     }
+// }
+pub trait GetAsset<O, I> {
+    /// A reference to a loaded asset.
+    fn get(&self, id: I) -> Option<&O>;
+}
+
+impl GetAsset<Image, ImageAssetID> for AssetSystem {
+    fn get(&self, id: ImageAssetID) -> Option<&Image> {
+        self.images.get(id.0)
+    }
+}
+
+impl GetAsset<Audio, AudioAssetID> for AssetSystem {
+    fn get(&self, id: AudioAssetID) -> Option<&Audio> {
+        self.audio.get(id.0)
     }
 }
 

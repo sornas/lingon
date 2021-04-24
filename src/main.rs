@@ -4,7 +4,7 @@ use std::path::Path;
 use std::time::Instant;
 
 use lingon::audio::Audio;
-use lingon::asset;
+use lingon::asset::{AssetSystem, GetAsset};
 use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
 
@@ -31,8 +31,10 @@ fn main_loop(mut surface: GL33Surface) {
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
 
-    let image = asset::Image::new(Path::new("res/coin-gold.png").to_path_buf());
-    let sheet = renderer.add_sprite_sheet(image, (16, 16));
+    let mut assets = AssetSystem::new();
+    let image = assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
+
+    let sheet = renderer.add_sprite_sheet(assets.get(image).unwrap().clone(), (16, 16));
 
     let mut particle_system = lingon::particle_system!(
         lifetime       = [1.0, 2.0]    random::TwoDice,
