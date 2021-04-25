@@ -4,6 +4,7 @@ mod image;
 pub use audio::Audio;
 pub use image::Image;
 
+use std::ops::Index;
 use std::path::PathBuf;
 use std::time::SystemTime;
 
@@ -50,6 +51,22 @@ impl AssetSystem {
     }
 }
 
+impl Index<ImageAssetID> for AssetSystem {
+    type Output = Image;
+
+    fn index(&self, id: ImageAssetID) -> &Self::Output {
+        self.images.get(id.0).expect(&format!("Invalid image asset {}", id.0))
+    }
+}
+
+impl Index<AudioAssetID> for AssetSystem {
+    type Output = Audio;
+
+    fn index(&self, id: AudioAssetID) -> &Self::Output {
+        self.audio.get(id.0).expect(&format!("Invalid audio asset {}", id.0))
+    }
+}
+
 /// Gets an asset from the asset system.
 ///
 /// While this might look a bit bloated, it accomplishes two things.
@@ -66,19 +83,19 @@ impl AssetSystem {
 //         self.images.get(id.0)
 //     }
 // }
-pub trait GetAsset<O, I> {
+pub trait TryGetAsset<O, I> {
     /// A reference to a loaded asset.
-    fn get(&self, id: I) -> Option<&O>;
+    fn try_get(&self, id: I) -> Option<&O>;
 }
 
-impl GetAsset<Image, ImageAssetID> for AssetSystem {
-    fn get(&self, id: ImageAssetID) -> Option<&Image> {
+impl TryGetAsset<Image, ImageAssetID> for AssetSystem {
+    fn try_get(&self, id: ImageAssetID) -> Option<&Image> {
         self.images.get(id.0)
     }
 }
 
-impl GetAsset<Audio, AudioAssetID> for AssetSystem {
-    fn get(&self, id: AudioAssetID) -> Option<&Audio> {
+impl TryGetAsset<Audio, AudioAssetID> for AssetSystem {
+    fn try_get(&self, id: AudioAssetID) -> Option<&Audio> {
         self.audio.get(id.0)
     }
 }
