@@ -164,12 +164,24 @@ name = "lingon"
 version = "0.1.0"
 dependencies = [
  "cgmath",
+ "lazy_static",
+ "lingon_macro",
  "luminance",
  "luminance-derive",
  "luminance-sdl2",
  "luminance-windowing",
  "stb_image",
  "sungod",
+]
+
+[[package]]
+name = "lingon_macro"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
