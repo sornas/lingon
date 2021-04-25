@@ -6,6 +6,7 @@ use std::time::Instant;
 use lingon::asset;
 use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
+use lingon::performance;
 
 /// A list of all valid inputs.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -66,7 +67,12 @@ fn main_loop(mut surface: GL33Surface) {
         let delta = t - old_t;
         old_t = t;
 
+        performance::frame();
+
+        let timer = lingon::counter!("input");
         input.poll(surface.sdl());
+        drop(timer);
+
         if input.pressed(Name::Quit) {
             break 'app;
         }
