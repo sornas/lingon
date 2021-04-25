@@ -2,9 +2,7 @@
 Lingon is a minimalistic game engine aimed at Game Jams, made to be compatibly
 with the sylt programming language.
 
-<div style="border:2px solid red; margin-left: auto; margin-right: auto;">
-    NOTE: Under heavy development
-</div>
+*NOTE: Under heavy development*
 
 ## Getting started
 There are two ways this engine can be used:
