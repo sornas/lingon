@@ -6,7 +6,7 @@ use luminance_sdl2::sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
 pub const SAMPLE_RATE: i32 = 48000;
 
 /// A sound that is playing.
-pub struct AudioSource {
+struct AudioSource {
     /// Which specific sample we're currently on.
     position: usize,
     /// Whether we should loop when the sample is done.
