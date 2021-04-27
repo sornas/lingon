@@ -21,10 +21,6 @@ impl AudioSource {
 
 pub struct Audio {
     sources: Vec<AudioSource>,
-
-    phase_inc: f32,
-    phase: f32,
-    volume: f32,
 }
 
 impl Audio {
@@ -40,10 +36,6 @@ impl Audio {
             assert_eq!(spec.freq, SAMPLE_RATE); //TODO handle differing sample rates gracefully
             Self {
                 sources: Vec::new(),
-
-                phase_inc: 440.0 / spec.freq as f32,
-                phase: 0.0,
-                volume: 0.05,
             }
         }).unwrap()
     }
@@ -73,15 +65,6 @@ impl AudioCallback for Audio {
                 }
                 *x += samples[source.position];
             }
-        }
-
-        for x in out.iter_mut() {
-            *x += if self.phase <= 0.5 {
-                self.volume
-            } else {
-                -self.volume
-            };
-            self.phase = (self.phase + self.phase_inc) % 1.0;
         }
     }
 }
