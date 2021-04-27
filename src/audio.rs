@@ -3,6 +3,8 @@ use crate::asset::audio::Samples;
 use luminance_sdl2::sdl2::Sdl;
 use luminance_sdl2::sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
 
+pub const SAMPLE_RATE: i32 = 48000;
+
 pub struct AudioSource {
     position: usize,
     samples: Samples,
@@ -29,12 +31,13 @@ impl Audio {
     pub fn init(sdl: &Sdl) -> AudioDevice<Self> {
         let audio_subsystem = sdl.audio().unwrap();
         let desired = AudioSpecDesired {
-            freq: Some(48000),
+            freq: Some(SAMPLE_RATE),
             channels: Some(1),
             samples: None,
         };
 
         audio_subsystem.open_playback(None, &desired, |spec| {
+            assert_eq!(spec.freq, SAMPLE_RATE); //TODO handle differing sample rates gracefully
             Self {
                 sources: Vec::new(),
 
