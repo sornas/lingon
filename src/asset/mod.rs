@@ -73,30 +73,6 @@ impl Index<AudioAssetID> for AssetSystem {
     }
 }
 
-/// Gets an asset from the asset system.
-///
-/// While this might look a bit bloated, it accomplishes two things.
-///
-/// 1) You can only get (e.g.) an [Image] from an [ImageAssetID].
-/// 2) You can always `get` the asset, regardless of its type. Otherwise you'd have
-/// `assets.image(image)`
-pub trait TryGetAsset<O, I> {
-    /// A reference to a loaded asset.
-    fn try_get(&self, id: I) -> Option<&O>;
-}
-
-impl TryGetAsset<Image, ImageAssetID> for AssetSystem {
-    fn try_get(&self, id: ImageAssetID) -> Option<&Image> {
-        self.images.get(id.0)
-    }
-}
-
-impl TryGetAsset<Audio, AudioAssetID> for AssetSystem {
-    fn try_get(&self, id: AudioAssetID) -> Option<&Audio> {
-        self.audio.get(id.0)
-    }
-}
-
 /// A file on disk that has been loaded.
 #[derive(Clone, Debug)]
 pub struct LoadedFile {
