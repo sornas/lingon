@@ -49,6 +49,12 @@ impl AssetSystem {
         self.audio.push(Audio::new(file));
         AudioAssetID(id)
     }
+
+    pub fn reload(&mut self) {
+        for audio in self.audio.iter_mut() {
+            audio.reload();
+        }
+    }
 }
 
 impl Index<ImageAssetID> for AssetSystem {

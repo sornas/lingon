@@ -125,6 +125,7 @@ fn main_loop(mut surface: GL33Surface) {
             (input.value(Name::Up) - input.value(Name::Down)) * delta,
         );
 
+        assets.reload();
         renderer.reload();
 
         if renderer.render(&mut surface).is_err() {
