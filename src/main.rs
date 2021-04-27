@@ -15,6 +15,7 @@ pub enum Name {
     Right,
     Up,
     Down,
+    PlaySound,
     Quit,
 }
 
@@ -59,6 +60,7 @@ fn main_loop(mut surface: GL33Surface) {
     input.bind(input::Device::Key(input::Keycode::W), Name::Up);
     input.bind(input::Device::Key(input::Keycode::S), Name::Down);
     input.bind(input::Device::Key(input::Keycode::Escape), Name::Quit);
+    input.bind(input::Device::Key(input::Keycode::F), Name::PlaySound);
     input.bind(input::Device::Quit, Name::Quit);
     input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
     input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
@@ -66,8 +68,7 @@ fn main_loop(mut surface: GL33Surface) {
     let mut audio = Audio::init(surface.sdl());
     audio.resume();
 
-    let songo = assets.load_audio(Path::new("res/upgrades-f32.wav").to_path_buf());
-    audio.lock().play(&assets[songo]);
+    let bloop = assets.load_audio(Path::new("res/bloop.wav").to_path_buf());
 
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;
     'app: loop {
@@ -78,6 +79,10 @@ fn main_loop(mut surface: GL33Surface) {
         input.poll(surface.sdl());
         if input.pressed(Name::Quit) {
             break 'app;
+        }
+
+        if input.pressed(Name::PlaySound) {
+            audio.lock().play(&assets[bloop]);
         }
 
         particle_system.position[0] = t.cos() * 0.5;
