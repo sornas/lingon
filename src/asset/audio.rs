@@ -1,9 +1,27 @@
 use super::LoadedFile;
 
-use std::path::PathBuf;
+use std::{ops::Deref, path::PathBuf};
+use std::sync::{Arc, RwLock};
+
+#[derive(Clone)]
+pub struct Samples(Arc<RwLock<Vec<f32>>>);
+
+impl Samples {
+    pub fn new() -> Self {
+        Self(Arc::new(RwLock::new(Vec::new())))
+    }
+}
+
+impl Deref for Samples {
+    type Target = Arc<RwLock<Vec<f32>>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 pub struct Audio {
-    samples: Vec<f32>,
+    samples: Samples,
     data: LoadedFile,
 }
 
@@ -11,11 +29,15 @@ impl Audio {
     pub fn new(file: PathBuf) -> Self {
         let (data, bytes) = LoadedFile::new(file);
         let mut ret = Self {
-            samples: Vec::new(),
+            samples: Samples::new(),
             data,
         };
         ret.load_data(bytes);
         ret
+    }
+
+    pub fn samples(&self) -> Samples {
+        self.samples.clone()
     }
 
     pub fn reload(&mut self) -> bool {

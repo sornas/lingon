@@ -1,5 +1,5 @@
-mod audio;
-mod image;
+pub mod audio;
+pub mod image;
 
 pub use audio::Audio;
 pub use image::Image;
