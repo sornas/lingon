@@ -65,7 +65,7 @@ impl AudioCallback for Audio {
                 source.position += 1;
                 if source.position >= samples.len() {
                     if source.looping {
-                        source.position = 0;
+                        source.position %= samples.len();
                     } else {
                         source.remove = true;
                         continue 'sources;
