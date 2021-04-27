@@ -6,17 +6,18 @@ use luminance_sdl2::sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
 pub const SAMPLE_RATE: i32 = 48000;
 
 pub struct AudioSource {
+    /// Current position in the samples
     position: usize,
+    /// 
+    looping: bool,
     samples: Samples,
-}
 
-impl AudioSource {
-    pub fn new(samples: Samples) -> Self {
-        Self {
-            position: 0,
-            samples,
-        }
-    }
+    /// Remove this source when we get the opportunity.
+    ///
+    /// Gets set if
+    /// a) the audio is done playing and it doesn't loop,
+    /// b) it is requested by the user.
+    remove: bool,
 }
 
 pub struct Audio {
@@ -43,7 +44,10 @@ impl Audio {
     pub fn play(&mut self, audio: &asset::Audio) {
         self.sources.push(AudioSource {
             position: 0,
+            looping: false,
             samples: audio.samples(),
+
+            remove: false,
         });
     }
 }
@@ -56,14 +60,31 @@ impl AudioCallback for Audio {
             *x = 0.0;
         }
 
-        for source in self.sources.iter_mut() {
+        'sources: for source in self.sources.iter_mut() {
             let samples = source.samples.read().unwrap();
             for x in out.iter_mut() {
+                // Move forward
                 source.position += 1;
                 if source.position >= samples.len() {
-                    source.position = 0;
+                    if source.looping {
+                        source.position = 0;
+                    } else {
+                        source.remove = true;
+                        continue 'sources;
+                    }
                 }
+
+                // Write data
                 *x += samples[source.position];
+            }
+        }
+
+        let mut i = 0;
+        while i != self.sources.len() {
+            if self.sources[i].remove {
+                self.sources.remove(i);
+            } else {
+                i += 1;
             }
         }
     }
