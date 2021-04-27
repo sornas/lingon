@@ -35,14 +35,18 @@ fn bind_inputs(sdl: &Sdl) -> input::InputManager<Name> {
 }
 
 fn main() {
+    // Create the initial game state and input manager.
     let mut game = lingon::Game::new("game", 800, 600);
     let mut input = bind_inputs(game.sdl());
 
+    // Load an image and a sound.
     let coin = game.assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
     let bloop = game.assets.load_audio(Path::new("res/bloop.wav").to_path_buf());
 
+    // Add our image as a sprite sheet.
     let coin_sheet = game.renderer.add_sprite_sheet(game.assets[coin].clone(), (16, 16));
 
+    // Create a particle system.
     let mut particle_system = lingon::particle_system!(
         lifetime       = [1.0, 2.0]    random::TwoDice,
         start_sx       = [0.01, 0.015] random::TwoDice,
@@ -59,10 +63,11 @@ fn main() {
     );
 
     'main: loop {
+        // Go a step forward in time.
         let delta = game.time_tick();
         game.update(delta);
 
-        // poll input
+        // Poll input and time it.
         let timer = lingon::counter!("input");
         input.poll(game.sdl());
         drop(timer);
@@ -72,33 +77,43 @@ fn main() {
         }
 
         if input.pressed(Name::PlaySound) {
+            // Play an audio asset.
             game.audio.lock().play(&game.assets[bloop]);
         }
 
-        // update particle system
+        // Move the particle system in a circle. One revolution takes 2*PI seconds.
         particle_system.position[0] = game.total_time().cos() * 0.5;
         particle_system.position[1] = game.total_time().sin() * 0.5;
+
+        // Spawn five particles each frame.
         for _ in 0..5 {
             particle_system.spawn();
         }
+
+        // Simulate the particle system.
         particle_system.update(delta);
 
+        // Get a region of the previously added sprite sheet.
+        // The time-dependence effectively creates an animation.
         let region = game.renderer.sprite_sheets[coin_sheet].grid(
                 [0, 1, 2, 3, 2, 1][((game.total_time() * 10.0) as usize) % 6],
                 0
         );
 
+        // Draw the selected coin sprite in a table layout.
         for x in -5..5 {
             for y in -5..5 {
                 game.renderer.push(
                     Sprite::new(region)
                         .at(x as f32, y as f32)
                         .scale(0.3, 0.3)
+                        // Also, spin them around! :D
                         .angle(game.total_time()),
                 );
             }
         }
 
+        // Simulate a Square distribution...
         const NUM_BUCKETS: usize = 100;
         let mut buckets = [0; NUM_BUCKETS];
         for _ in 0..10000 {
@@ -106,19 +121,23 @@ fn main() {
             buckets[(sample * (NUM_BUCKETS as f32)) as usize] += 1;
         }
 
+        // ... by drawing rectangles that are scaled according to how likely the value was.
         for (i, v) in buckets.iter().enumerate() {
             let w = 1.0 / (NUM_BUCKETS as f32);
             let h = (*v as f32) * w * 0.1;
             game.renderer.push(Rect::new().scale(w, h).at((i as f32) * w, h / 2.0));
         }
 
+        // Tell the renderer to draw the particle system.
         game.renderer.push_particle_system(&particle_system);
-        //input.rumble(0, input.value(input::Name::Right), input.value(input::Name::Up), 1.0).unwrap();
+
+        // Tell the renderer to move the camera.
         game.renderer.camera.move_by(
             (input.value(Name::Right) - input.value(Name::Left)) * delta,
             (input.value(Name::Up) - input.value(Name::Down)) * delta,
         );
 
+        // Draw this frame.
         if game.draw().is_err() {
             break 'main;
         }
