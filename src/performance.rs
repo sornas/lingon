@@ -3,6 +3,10 @@ use lazy_static::lazy_static;
 use std::time::Instant;
 use std::borrow::BorrowMut;
 
+lazy_static! {
+    pub static ref PERF_COUNTER: Arc<Mutex<Collector>> = Arc::new(Mutex::new(Collector::new()));
+}
+
 pub struct Marker {
     start: Instant,
     id: usize,
@@ -109,10 +113,6 @@ macro_rules! counter {
             lingon::performance::PERF_COUNTER.lock().unwrap().start(counter, info)
         }
     };
-}
-
-lazy_static! {
-    pub static ref PERF_COUNTER: Arc<Mutex<Collector>> = Arc::new(Mutex::new(Collector::new()));
 }
 
 pub struct Collector {
