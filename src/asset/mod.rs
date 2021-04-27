@@ -1,3 +1,17 @@
+//! The asset subsystem.
+//!
+//! This handles loading and reloading of asset files. All loads return an ID; for example,
+//! [AssetSystem::load_audio] returns an [AudioAssetID]. To get the actual asset, index the asset
+//! system like this:
+//!
+//! ```ignored
+//! let assets = AssetSystem::new();
+//! let audio_id = assets.load_audio(Path::new("path/to/sound.wav".to_path_buf()));
+//! let audio_asset = assets[audio_id];
+//! ```
+//!
+//! When building with `cfg(debug_assertions)` (i.e. without `--release`) assets are hot-reloaded.
+
 pub mod audio;
 pub mod image;
 
@@ -73,7 +87,6 @@ impl Index<AudioAssetID> for AssetSystem {
     }
 }
 
-/// A file on disk that has been loaded.
 #[derive(Clone, Debug)]
 pub struct LoadedFile {
     pub file: PathBuf,

@@ -3,6 +3,7 @@ use super::LoadedFile;
 use std::{ops::Deref, path::PathBuf};
 use std::sync::{Arc, RwLock};
 
+/// Actual audio data.
 #[derive(Clone)]
 pub struct Samples(Arc<RwLock<Vec<f32>>>);
 

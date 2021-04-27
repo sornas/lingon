@@ -5,19 +5,24 @@ use luminance_sdl2::sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
 
 pub const SAMPLE_RATE: i32 = 48000;
 
+/// A sound that is playing.
 pub struct AudioSource {
+    /// Which specific sample we're currently on.
     position: usize,
+    /// Whether we should loop when the sample is done.
     looping: bool,
+    /// The actual samples.
     samples: Samples,
 
-    /// Remove this source when we get the opportunity.
+    /// If we should remove this source when we get the opportunity.
     ///
-    /// Gets set if
+    /// This gets set if
     /// a) the audio is done playing and it doesn't loop,
     /// b) it is requested by the user.
     remove: bool,
 }
 
+/// The audio subsystem.
 pub struct Audio {
     sources: Vec<AudioSource>,
 }
@@ -39,6 +44,7 @@ impl Audio {
         }).unwrap()
     }
 
+    /// Start playing a new sound.
     pub fn play(&mut self, audio: &asset::Audio) {
         self.sources.push(AudioSource {
             position: 0,
@@ -54,6 +60,7 @@ impl AudioCallback for Audio {
     type Channel = f32;
 
     fn callback(&mut self, out: &mut [Self::Channel]) {
+        // Clear the buffer.
         for x in out.iter_mut() {
             *x = 0.0;
         }
@@ -77,6 +84,7 @@ impl AudioCallback for Audio {
             }
         }
 
+        // Remove sources that have finished.
         let mut i = 0;
         while i != self.sources.len() {
             if self.sources[i].remove {
