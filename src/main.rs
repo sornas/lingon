@@ -1,3 +1,5 @@
+use luminance_sdl2::sdl2;
+use sdl2::Sdl;
 use std::f32::consts::PI;
 use std::path::Path;
 
@@ -16,10 +18,9 @@ pub enum Name {
     Quit,
 }
 
-fn main() {
-    let mut game = lingon::Game::new("game", 800, 600);
-    
-    let mut input = input::InputManager::new(game.sdl());
+fn bind_inputs(sdl: &Sdl) -> input::InputManager<Name> {
+    let mut input = input::InputManager::new(sdl);
+
     input.bind(input::Device::Key(input::Keycode::A), Name::Left);
     input.bind(input::Device::Key(input::Keycode::D), Name::Right);
     input.bind(input::Device::Key(input::Keycode::W), Name::Up);
@@ -30,10 +31,17 @@ fn main() {
     input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
     input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
 
-    let image = game.assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
+    input
+}
+
+fn main() {
+    let mut game = lingon::Game::new("game", 800, 600);
+    let mut input = bind_inputs(game.sdl());
+
+    let coin = game.assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
     let bloop = game.assets.load_audio(Path::new("res/bloop.wav").to_path_buf());
 
-    let sheet = game.renderer.add_sprite_sheet(game.assets[image].clone(), (16, 16));
+    let coin_sheet = game.renderer.add_sprite_sheet(game.assets[coin].clone(), (16, 16));
 
     let mut particle_system = lingon::particle_system!(
         lifetime       = [1.0, 2.0]    random::TwoDice,
@@ -75,7 +83,7 @@ fn main() {
         }
         particle_system.update(delta);
 
-        let region = game.renderer.sprite_sheets[sheet].grid(
+        let region = game.renderer.sprite_sheets[coin_sheet].grid(
                 [0, 1, 2, 3, 2, 1][((game.total_time() * 10.0) as usize) % 6],
                 0
         );
@@ -110,6 +118,7 @@ fn main() {
             (input.value(Name::Right) - input.value(Name::Left)) * delta,
             (input.value(Name::Up) - input.value(Name::Down)) * delta,
         );
+
         if game.draw().is_err() {
             break 'main;
         }

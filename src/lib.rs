@@ -47,6 +47,16 @@ impl Game {
             prev_t: 0.0,
         }
     }
+
+    pub fn update(&mut self, _delta: f32) { 
+        performance::frame();
+        self.assets.reload();
+        self.renderer.reload();
+    }
+
+    pub fn draw(&mut self) -> Result<(), ()> {
+        self.renderer.render(&mut self.surface)
+    }
     
     pub fn sdl(&self) -> &Sdl {
         self.surface.sdl()
@@ -61,15 +71,5 @@ impl Game {
 
     pub fn total_time(&self) -> f32 {
         self.prev_t
-    }
-
-    pub fn update(&mut self, _delta: f32) { 
-        performance::frame();
-        self.assets.reload();
-        self.renderer.reload();
-    }
-
-    pub fn draw(&mut self) -> Result<(), ()> {
-        self.renderer.render(&mut self.surface)
     }
 }
