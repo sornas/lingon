@@ -52,11 +52,17 @@ impl Audio {
 
     pub fn load_data(&mut self, bytes: Vec<u8>) {
         let (header, data) = wav::read(&mut std::io::Cursor::new(bytes)).unwrap();
-        println!("Read wav: {:?}", header);
+        if header.sampling_rate as i32 != crate::audio::SAMPLE_RATE {
+            println!(
+                "warn: {} contains non-supported sample rate {}\nwarn: only 48000 is currently supported",
+                 self.data.file.display(),
+                 header.sampling_rate,
+            );
+        }
         let mut samples = self.samples.write().unwrap();
         match data {
             wav::BitDepth::ThirtyTwoFloat(data) => *samples = data,
-            _ => todo!(),
+            _ => todo!("Only WAV containing floats are currently supported"),
         }
     }
 }
