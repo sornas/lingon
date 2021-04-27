@@ -51,6 +51,11 @@ impl Audio {
     }
 
     pub fn load_data(&mut self, bytes: Vec<u8>) {
-        todo!()
+        let (_header, data) = wav::read(&mut std::io::Cursor::new(bytes)).unwrap();
+        let mut samples = self.samples.write().unwrap();
+        match data {
+            wav::BitDepth::ThirtyTwoFloat(data) => *samples = data,
+            _ => todo!(),
+        }
     }
 }
