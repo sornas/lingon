@@ -28,7 +28,7 @@ impl Audio {
         let audio_subsystem = sdl.audio().unwrap();
         let desired = AudioSpecDesired {
             freq: Some(SAMPLE_RATE),
-            channels: Some(1),
+            channels: Some(2),
             samples: None,
         };
 
