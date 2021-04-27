@@ -1,4 +1,4 @@
-use crate::asset::audio::Samples;
+use crate::asset::{self, audio::Samples};
 
 use luminance_sdl2::sdl2::Sdl;
 use luminance_sdl2::sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
@@ -46,6 +46,13 @@ impl Audio {
                 volume: 0.05,
             }
         }).unwrap()
+    }
+
+    pub fn play(&mut self, audio: &asset::Audio) {
+        self.sources.push(AudioSource {
+            position: 0,
+            samples: audio.samples(),
+        });
     }
 }
 

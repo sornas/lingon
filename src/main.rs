@@ -63,8 +63,11 @@ fn main_loop(mut surface: GL33Surface) {
     input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
     input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
 
-    let audio = Audio::init(surface.sdl());
+    let mut audio = Audio::init(surface.sdl());
     audio.resume();
+
+    let songo = assets.load_audio(Path::new("res/upgrades-f32.wav").to_path_buf());
+    audio.lock().play(&assets[songo]);
 
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;
     'app: loop {
