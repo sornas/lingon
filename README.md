@@ -1,4 +1,4 @@
-<img src="lingon.svg" width="256"/>
+<img src="lingon.svg" width="64"/>
 
 # Lingon - The Sour Game Engine
 Lingon is a minimalistic game engine aimed at Game Jams, made to be compatible
