@@ -74,15 +74,6 @@ impl Index<AudioAssetID> for AssetSystem {
 /// 1) You can only get (e.g.) an [Image] from an [ImageAssetID].
 /// 2) You can always `get` the asset, regardless of its type. Otherwise you'd have
 /// `assets.image(image)`
-// This might in the future be solvable with generic associated types. Something like:
-//
-// impl<'a> Index<ImageAssetID> for AssetSystem {
-//     type Output = Option<&'a Image>;
-// 
-//     fn index(&'a self, id: ImageAssetID) -> &Self::Output {
-//         self.images.get(id.0)
-//     }
-// }
 pub trait TryGetAsset<O, I> {
     /// A reference to a loaded asset.
     fn try_get(&self, id: I) -> Option<&O>;
