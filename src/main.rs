@@ -3,7 +3,8 @@ use std::f32::consts::PI;
 use std::path::Path;
 use std::time::Instant;
 
-use lingon::asset;
+use lingon::audio::Audio;
+use lingon::asset::AssetSystem;
 use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
 use lingon::performance;
@@ -15,6 +16,7 @@ pub enum Name {
     Right,
     Up,
     Down,
+    PlaySound,
     Quit,
 }
 
@@ -31,8 +33,10 @@ fn main_loop(mut surface: GL33Surface) {
     sampler.mag_filter = luminance::texture::MagFilter::Nearest;
     let mut renderer = Renderer::new(&mut surface, sampler);
 
-    let image = asset::Image::new(Path::new("res/coin-gold.png").to_path_buf());
-    let sheet = renderer.add_sprite_sheet(image, (16, 16));
+    let mut assets = AssetSystem::new();
+    let image = assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
+
+    let sheet = renderer.add_sprite_sheet(assets[image].clone(), (16, 16));
 
     let mut particle_system = lingon::particle_system!(
         lifetime       = [1.0, 2.0]    random::TwoDice,
@@ -57,9 +61,15 @@ fn main_loop(mut surface: GL33Surface) {
     input.bind(input::Device::Key(input::Keycode::W), Name::Up);
     input.bind(input::Device::Key(input::Keycode::S), Name::Down);
     input.bind(input::Device::Key(input::Keycode::Escape), Name::Quit);
+    input.bind(input::Device::Key(input::Keycode::F), Name::PlaySound);
     input.bind(input::Device::Quit, Name::Quit);
     input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
     input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
+
+    let mut audio = Audio::init(surface.sdl());
+    audio.resume();
+
+    let bloop = assets.load_audio(Path::new("res/bloop.wav").to_path_buf());
 
     let mut old_t = start_t.elapsed().as_millis() as f32 * 1e-3;
     'app: loop {
@@ -75,6 +85,10 @@ fn main_loop(mut surface: GL33Surface) {
 
         if input.pressed(Name::Quit) {
             break 'app;
+        }
+
+        if input.pressed(Name::PlaySound) {
+            audio.lock().play(&assets[bloop]);
         }
 
         particle_system.position[0] = t.cos() * 0.5;
@@ -117,6 +131,7 @@ fn main_loop(mut surface: GL33Surface) {
             (input.value(Name::Up) - input.value(Name::Down)) * delta,
         );
 
+        assets.reload();
         renderer.reload();
 
         if renderer.render(&mut surface).is_err() {

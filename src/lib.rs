@@ -1,3 +1,4 @@
+pub mod audio;
 pub mod asset;
 pub mod input;
 pub mod random;
