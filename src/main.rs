@@ -1,5 +1,3 @@
-use luminance_sdl2::sdl2;
-use sdl2::Sdl;
 use std::f32::consts::PI;
 use std::path::Path;
 
@@ -18,26 +16,22 @@ pub enum Name {
     Quit,
 }
 
-fn bind_inputs(sdl: &Sdl) -> input::InputManager<Name> {
-    let mut input = input::InputManager::new(sdl);
-
-    input.bind(input::Device::Key(input::Keycode::A), Name::Left);
-    input.bind(input::Device::Key(input::Keycode::D), Name::Right);
-    input.bind(input::Device::Key(input::Keycode::W), Name::Up);
-    input.bind(input::Device::Key(input::Keycode::S), Name::Down);
-    input.bind(input::Device::Key(input::Keycode::Escape), Name::Quit);
-    input.bind(input::Device::Key(input::Keycode::F), Name::PlaySound);
-    input.bind(input::Device::Quit, Name::Quit);
-    input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
-    input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
-
-    input
+fn bind_inputs(game: &mut lingon::Game<Name>) {
+    game.input.bind(input::Device::Key(input::Keycode::A), Name::Left);
+    game.input.bind(input::Device::Key(input::Keycode::D), Name::Right);
+    game.input.bind(input::Device::Key(input::Keycode::W), Name::Up);
+    game.input.bind(input::Device::Key(input::Keycode::S), Name::Down);
+    game.input.bind(input::Device::Key(input::Keycode::Escape), Name::Quit);
+    game.input.bind(input::Device::Key(input::Keycode::F), Name::PlaySound);
+    game.input.bind(input::Device::Quit, Name::Quit);
+    game.input.bind(input::Device::Axis(0, input::Axis::LeftX), Name::Right);
+    game.input.bind(input::Device::Axis(0, input::Axis::RightY), Name::Up);
 }
 
 fn main() {
     // Create the initial game state and input manager.
     let mut game = lingon::Game::new("game", 800, 600);
-    let mut input = bind_inputs(game.sdl());
+    bind_inputs(&mut game);
 
     // Load an image and a sound.
     let coin = game.assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
@@ -69,14 +63,13 @@ fn main() {
 
         // Poll input and time it.
         let timer = lingon::counter!("input");
-        input.poll(game.sdl());
         drop(timer);
 
-        if input.pressed(Name::Quit) {
+        if game.input.pressed(Name::Quit) {
             break 'main;
         }
 
-        if input.pressed(Name::PlaySound) {
+        if game.input.pressed(Name::PlaySound) {
             // Play an audio asset.
             game.audio.lock().play(&game.assets[bloop]);
         }
@@ -133,8 +126,8 @@ fn main() {
 
         // Tell the renderer to move the camera.
         game.renderer.camera.move_by(
-            (input.value(Name::Right) - input.value(Name::Left)) * delta,
-            (input.value(Name::Up) - input.value(Name::Down)) * delta,
+            (game.input.value(Name::Right) - game.input.value(Name::Left)) * delta,
+            (game.input.value(Name::Up) - game.input.value(Name::Down)) * delta,
         );
 
         // Draw this frame.

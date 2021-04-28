@@ -2,6 +2,7 @@ use luminance_sdl2::sdl2;
 use luminance_sdl2::GL33Surface;
 use sdl2::audio::AudioDevice;
 use sdl2::Sdl;
+use std::hash::Hash;
 use std::time::Instant;
 
 pub mod audio;
@@ -12,17 +13,18 @@ pub mod renderer;
 pub mod performance;
 
 /// Everything you need to create a game.
-pub struct Game {
+pub struct Game<T> {
     pub audio: AudioDevice<audio::Audio>,
     pub assets: asset::AssetSystem,
     pub renderer: renderer::Renderer,
+    pub input: input::InputManager<T>,
 
     surface: GL33Surface,
     start_t: Instant,
     prev_t: f32,
 }
 
-impl Game {
+impl<T: Eq + Hash + Copy> Game<T> {
     pub fn new(title: &str, window_width: u32, window_height: u32) -> Self {
         let mut surface = GL33Surface::build_with(|video| video.window(title,
                                                                        window_width,
@@ -37,10 +39,13 @@ impl Game {
         audio.resume();
         let assets = asset::AssetSystem::new();
 
+        let input = input::InputManager::new(surface.sdl());
+
         Self {
             audio,
             assets,
             renderer,
+            input,
 
             surface,
             start_t: Instant::now(),
@@ -52,6 +57,7 @@ impl Game {
         performance::frame();
         self.assets.reload();
         self.renderer.reload();
+        self.input.poll(self.surface.sdl());
     }
 
     pub fn draw(&mut self) -> Result<(), ()> {
