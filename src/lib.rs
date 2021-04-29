@@ -53,7 +53,7 @@ impl<T: Eq + Hash + Clone> Game<T> {
         }
     }
 
-    pub fn update(&mut self, _delta: f32) { 
+    pub fn update(&mut self, _delta: f32) {
         performance::frame();
         self.assets.reload();
         self.renderer.reload();
@@ -63,7 +63,7 @@ impl<T: Eq + Hash + Clone> Game<T> {
     pub fn draw(&mut self) -> Result<(), ()> {
         self.renderer.render(&mut self.surface)
     }
-    
+
     pub fn sdl(&self) -> &Sdl {
         self.surface.sdl()
     }
