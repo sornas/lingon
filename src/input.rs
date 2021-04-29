@@ -79,7 +79,7 @@ const TRIGGER_LIMIT: f32 = 0.1;
 
 impl<T> InputManager<T>
 where
-    T: Copy + Hash + Eq,
+    T: Clone + Hash + Eq,
 {
     pub fn new(sdl: &Sdl) -> Self {
         let controllers = sdl.game_controller().unwrap();
@@ -96,7 +96,7 @@ where
 
     /// Creates a new binding to listen to.
     pub fn bind(&mut self, device: Device, name: T) {
-        self.physical_inputs.insert(device, name);
+        self.physical_inputs.insert(device, name.clone());
         self.virtual_inputs.insert(name, KeyState::Up(0));
     }
 
@@ -231,7 +231,7 @@ where
             };
 
             if let Some(slot) = self.physical_inputs.get(&input) {
-                self.virtual_inputs.insert(*slot, down);
+                self.virtual_inputs.insert(slot.clone(), down);
             }
         }
     }
