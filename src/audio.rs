@@ -5,8 +5,19 @@ use luminance_sdl2::sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
 
 pub const SAMPLE_RATE: i32 = 48000;
 
-/// A sound that is playing.
-struct AudioSource {
+macro_rules! impl_builder {
+    ( $( $field:ident : $type:ty ),* $(,)? ) => {
+        $(
+            pub fn $field(mut self, $field: $type) -> Self {
+                self.$field = $field;
+                self
+            }
+        )*
+    }
+}
+
+/// A sound that is playing or can be played.
+pub struct AudioSource {
     /// Which specific sample we're currently on.
     position: usize,
     /// Whether we should loop when the sample is done.
@@ -26,9 +37,26 @@ struct AudioSource {
     remove: bool,
 }
 
+impl AudioSource {
+    pub fn new(audio: &asset::Audio) -> Self {
+        Self {
+            position: 0,
+            looping: false,
+            samples: audio.samples(),
+            gain: 1.0,
+            remove: false,
+        }
+    }
+
+    impl_builder!(
+        looping: bool,
+        gain: f32,
+    );
+}
+
 /// The audio subsystem.
 pub struct Audio {
-    sources: Vec<AudioSource>,
+    sources: Vec<AudioSource>, 
 }
 
 impl Audio {
@@ -48,15 +76,20 @@ impl Audio {
         }).unwrap()
     }
 
-    /// Start playing a new sound.
-    pub fn play(&mut self, audio: &asset::Audio) {
-        self.sources.push(AudioSource {
-            position: 0,
-            looping: false,
-            samples: audio.samples(),
+    /// Start playing a new sound once.
+    ///
+    /// This uses the "default" settings for the [AudioSource]. If you want to modify it, use
+    /// [Audio::play_source].
+    pub fn play_asset(&mut self, audio: &asset::Audio) {
+        self.play_source(AudioSource::new(audio));
+    }
 
-            remove: false,
-        });
+    /// Start playing a new source.
+    ///
+    /// The source can be created via [AudioSource::new] and modified by builders on [AudioSource]
+    /// (like [AudioSource::looping]).
+    pub fn play_source(&mut self, source: AudioSource) {
+        self.sources.push(source);
     }
 }
 
