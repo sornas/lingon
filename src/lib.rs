@@ -24,7 +24,7 @@ pub struct Game<T> {
     prev_t: f32,
 }
 
-impl<T: Eq + Hash + Copy> Game<T> {
+impl<T: Eq + Hash + Clone> Game<T> {
     pub fn new(title: &str, window_width: u32, window_height: u32) -> Self {
         let mut surface = GL33Surface::build_with(|video| video.window(title,
                                                                        window_width,
