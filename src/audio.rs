@@ -14,6 +14,10 @@ struct AudioSource {
     /// The actual samples.
     samples: Samples,
 
+    gain: f32,
+    //TODO Add this when we have `position: f32`.
+    // pitch: f32,
+
     /// If we should remove this source when we get the opportunity.
     ///
     /// This gets set if
@@ -80,7 +84,7 @@ impl AudioCallback for Audio {
                 }
 
                 // Write data
-                *x += samples[source.position];
+                *x += samples[source.position] * source.gain;
             }
         }
 
