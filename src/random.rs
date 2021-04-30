@@ -25,16 +25,21 @@ impl RandomProperty {
 
     /// Samples a random value in the given range.
     pub fn sample(&self) -> f32 {
-        self.range[0] + (self.range[1] - self.range[0]) * self.distribution.sample()
+        self.distribution.between(self.range[0], self.range[1])
     }
 }
 
 pub trait Distribute {
     /// Get a random value between 0.0 and 1.0.
     fn sample(&self) -> f32;
+
+    /// Get a random value between two endpoints.
+    fn between(&self, low: f32, high: f32) -> f32 {
+        low + (high - low) * self.sample()
+    }
 }
 
-/// Always returns 0.
+/// Always returns the lowest value.
 pub struct NoDice;
 
 impl Distribute for NoDice {
@@ -52,7 +57,7 @@ impl Distribute for Uniform {
     }
 }
 
-/// Biased towards 0.5. Looks like a triangle.
+/// Biased towards the middle. Looks like a triangle.
 pub struct TwoDice;
 
 impl Distribute for TwoDice {
@@ -61,7 +66,7 @@ impl Distribute for TwoDice {
     }
 }
 
-/// Biased towards 0.5. Looks like a bellcurve.
+/// Biased towards the middle. Looks like a bellcurve.
 pub struct ThreeDice;
 
 impl Distribute for ThreeDice {
@@ -70,7 +75,7 @@ impl Distribute for ThreeDice {
     }
 }
 
-/// Biased towards 0. Looks like 1/x.
+/// Biased towards the lowest value. Looks like 1/x.
 pub struct Square;
 
 impl Distribute for Square {
