@@ -65,6 +65,7 @@ impl AssetSystem {
     }
 
     pub fn reload(&mut self) {
+        // Image assets are reloaded by the renderer, which also uploads them.
         for audio in self.audio.iter_mut() {
             audio.reload();
         }
