@@ -1,4 +1,5 @@
 use crate::asset::{self, audio::Samples};
+use crate::random::{self, Distribute};
 
 use luminance_sdl2::sdl2::Sdl;
 use luminance_sdl2::sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
@@ -17,6 +18,7 @@ macro_rules! impl_builder {
 }
 
 /// A sound that is playing or can be played.
+#[derive(Clone)]
 pub struct AudioSource {
     /// Which specific sample we're currently on.
     position: usize,
@@ -26,8 +28,10 @@ pub struct AudioSource {
     samples: Samples,
 
     gain: f32,
+    gain_variance: f32,
     //TODO Add this when we have `position: f32`.
     // pitch: f32,
+    // pitch_variance: f32,
 
     /// If we should remove this source when we get the opportunity.
     ///
@@ -44,6 +48,7 @@ impl AudioSource {
             looping: false,
             samples: audio.samples(),
             gain: 1.0,
+            gain_variance: 0.0,
             remove: false,
         }
     }
@@ -51,6 +56,7 @@ impl AudioSource {
     impl_builder!(
         looping: bool,
         gain: f32,
+        gain_variance: f32,
     );
 }
 
@@ -80,7 +86,10 @@ impl Audio {
     ///
     /// The source can be created via [AudioSource::new] and modified by builders on [AudioSource]
     /// (like [AudioSource::looping]).
-    pub fn play(&mut self, source: AudioSource) {
+    pub fn play(&mut self, mut source: AudioSource) {
+        if source.gain_variance != 0.0 {
+            source.gain += random::Uniform.between(-source.gain_variance, source.gain_variance);
+        }
         self.sources.push(source);
     }
 }
