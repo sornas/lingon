@@ -21,7 +21,7 @@ macro_rules! impl_builder {
 #[derive(Clone)]
 pub struct AudioSource {
     /// Which specific sample we're currently on.
-    position: usize,
+    position: f32,
     /// Whether we should loop when the sample is done.
     looping: bool,
     /// The actual samples.
@@ -29,9 +29,8 @@ pub struct AudioSource {
 
     gain: f32,
     gain_variance: f32,
-    //TODO Add this when we have `position: f32`.
-    // pitch: f32,
-    // pitch_variance: f32,
+    pitch: f32,
+    pitch_variance: f32,
 
     /// If we should remove this source when we get the opportunity.
     ///
@@ -44,11 +43,13 @@ pub struct AudioSource {
 impl AudioSource {
     pub fn new(audio: &asset::Audio) -> Self {
         Self {
-            position: 0,
+            position: 0.0,
             looping: false,
             samples: audio.samples(),
             gain: 1.0,
             gain_variance: 0.0,
+            pitch: 1.0,
+            pitch_variance: 0.0,
             remove: false,
         }
     }
@@ -57,6 +58,8 @@ impl AudioSource {
         looping: bool,
         gain: f32,
         gain_variance: f32,
+        pitch: f32,
+        pitch_variance: f32,
     );
 }
 
@@ -71,7 +74,7 @@ impl Audio {
         let desired = AudioSpecDesired {
             freq: Some(SAMPLE_RATE),
             channels: Some(2),
-            samples: None,
+            samples: Some(1024),
         };
 
         audio_subsystem.open_playback(None, &desired, |spec| {
@@ -86,10 +89,18 @@ impl Audio {
     ///
     /// The source can be created via [AudioSource::new] and modified by builders on [AudioSource]
     /// (like [AudioSource::looping]).
+    ///
+    /// # Panics
+    ///
+    /// Panics if pitch <= 0.0 after applying pitch variance.
     pub fn play(&mut self, mut source: AudioSource) {
         if source.gain_variance != 0.0 {
             source.gain += random::Uniform.between(-source.gain_variance, source.gain_variance);
         }
+        if source.pitch_variance != 0.0 {
+            source.pitch += random::Uniform.between(-source.pitch_variance, source.pitch_variance);
+        }
+        assert!(source.pitch > 0.0);
         self.sources.push(source);
     }
 }
@@ -107,10 +118,13 @@ impl AudioCallback for Audio {
             let samples = source.samples.read().unwrap();
             for x in out.iter_mut() {
                 // Move forward
-                source.position += 1;
-                if source.position >= samples.len() {
+                source.position += source.pitch;
+                let mut position = source.position as usize; // Truncates
+                if position >= samples.len() {
                     if source.looping {
-                        source.position %= samples.len();
+                        position %= samples.len();
+                        // Keep the decimal on source.position
+                        source.position -= (source.position as usize - position) as f32;
                     } else {
                         source.remove = true;
                         continue 'sources;
@@ -118,7 +132,7 @@ impl AudioCallback for Audio {
                 }
 
                 // Write data
-                *x += samples[source.position] * source.gain;
+                *x += samples[position] * source.gain;
             }
         }
 
