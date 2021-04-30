@@ -76,19 +76,11 @@ impl Audio {
         }).unwrap()
     }
 
-    /// Start playing a new sound once.
-    ///
-    /// This uses the "default" settings for the [AudioSource]. If you want to modify it, use
-    /// [Audio::play_source].
-    pub fn play_asset(&mut self, audio: &asset::Audio) {
-        self.play_source(AudioSource::new(audio));
-    }
-
     /// Start playing a new source.
     ///
     /// The source can be created via [AudioSource::new] and modified by builders on [AudioSource]
     /// (like [AudioSource::looping]).
-    pub fn play_source(&mut self, source: AudioSource) {
+    pub fn play(&mut self, source: AudioSource) {
         self.sources.push(source);
     }
 }
