@@ -30,8 +30,7 @@ pub struct AudioSource {
     gain: f32,
     gain_variance: f32,
     pitch: f32,
-    //TODO Add this when we have `position: f32`.
-    // pitch_variance: f32,
+    pitch_variance: f32,
 
     /// If we should remove this source when we get the opportunity.
     ///
@@ -50,6 +49,7 @@ impl AudioSource {
             gain: 1.0,
             gain_variance: 0.0,
             pitch: 1.0,
+            pitch_variance: 0.0,
             remove: false,
         }
     }
@@ -59,6 +59,7 @@ impl AudioSource {
         gain: f32,
         gain_variance: f32,
         pitch: f32,
+        pitch_variance: f32,
     );
 }
 
@@ -91,6 +92,9 @@ impl Audio {
     pub fn play(&mut self, mut source: AudioSource) {
         if source.gain_variance != 0.0 {
             source.gain += random::Uniform.between(-source.gain_variance, source.gain_variance);
+        }
+        if source.pitch_variance != 0.0 {
+            source.pitch += random::Uniform.between(-source.pitch_variance, source.pitch_variance);
         }
         self.sources.push(source);
     }

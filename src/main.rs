@@ -38,9 +38,10 @@ fn main() {
     let coin = game.assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
     let bloop = game.assets.load_audio(Path::new("res/bloop.wav").to_path_buf());
     let bloop = AudioSource::new(&game.assets[bloop])
-        .gain(0.2)
+        .gain(0.3)
+        .gain_variance(0.2)
         .pitch(1.5)
-        .gain_variance(0.2);
+        .pitch_variance(0.2);
 
     // Add our image as a sprite sheet.
     let coin_sheet = game.renderer.add_sprite_sheet(game.assets[coin].clone(), (16, 16));
