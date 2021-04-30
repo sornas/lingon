@@ -71,7 +71,14 @@ pub struct InputManager<T> {
 fn remap(value: i16) -> f32 {
     // MIN has a larger absolute value,
     // this garantees that the values in [-1, 1).
-    -(value as f32) / (i16::MIN as f32)
+    let value = -(value as f32) / (i16::MIN as f32);
+    // Arbitrarily choosen
+    const DEADZONE: f32 = 0.10;
+    if value.abs() < DEADZONE {
+        0.0
+    } else {
+        value / (1.0 - DEADZONE)
+    }
 }
 
 /// When an analog signal becomes digital.
