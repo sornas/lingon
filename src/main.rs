@@ -33,6 +33,7 @@ fn main() {
     // Create the initial game state and input manager.
     let mut game = lingon::Game::new("game", 800, 600);
     bind_inputs(&mut game);
+    *game.audio.lock().gain_mut() = 0.5;
 
     // Load an image and a sound.
     let coin = game.assets.load_image(Path::new("res/coin-gold.png").to_path_buf());

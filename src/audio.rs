@@ -63,6 +63,7 @@ impl AudioSource {
 /// The audio subsystem.
 pub struct Audio {
     sources: Vec<AudioSource>, 
+    gain: f32,
 }
 
 impl Audio {
@@ -78,6 +79,7 @@ impl Audio {
             assert_eq!(spec.freq, SAMPLE_RATE); //TODO handle differing sample rates gracefully
             Self {
                 sources: Vec::new(),
+                gain: 1.0,
             }
         }).unwrap()
     }
@@ -91,6 +93,14 @@ impl Audio {
             source.gain += random::Uniform.between(-source.gain_variance, source.gain_variance);
         }
         self.sources.push(source);
+    }
+
+    pub fn gain(&self) -> f32 {
+        self.gain
+    }
+
+    pub fn gain_mut(&mut self) -> &mut f32 {
+        &mut self.gain
     }
 }
 
@@ -118,7 +128,7 @@ impl AudioCallback for Audio {
                 }
 
                 // Write data
-                *x += samples[source.position] * source.gain;
+                *x += samples[source.position] * source.gain * self.gain;
             }
         }
 
