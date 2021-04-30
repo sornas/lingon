@@ -26,10 +26,10 @@ use std::time::SystemTime;
 pub type Pixels = usize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ImageAssetID(usize);
+pub struct ImageAssetID(pub usize);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct AudioAssetID(usize);
+pub struct AudioAssetID(pub usize);
 
 /// If the type of asset type is unknown or doesn't matter.
 pub enum AssetID {
