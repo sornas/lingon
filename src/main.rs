@@ -37,6 +37,7 @@ fn main() {
     // Load an image and a sound.
     let coin = game.assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
     let bloop = game.assets.load_audio(Path::new("res/bloop.wav").to_path_buf());
+    let bloop = AudioSource::new(&game.assets[bloop]).gain(0.2).gain_variance(0.2);
 
     // Add our image as a sprite sheet.
     let coin_sheet = game.renderer.add_sprite_sheet(game.assets[coin].clone(), (16, 16));
@@ -72,7 +73,7 @@ fn main() {
 
         if game.input.pressed(Name::PlaySound) {
             // Play an audio asset.
-            game.audio.lock().play(AudioSource::new(&game.assets[bloop]));
+            game.audio.lock().play(bloop.clone());
         }
 
         // Move the particle system in a circle. One revolution takes 2*PI seconds.
