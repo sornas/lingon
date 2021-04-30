@@ -19,15 +19,14 @@ macro_rules! impl_builder {
 /// A sound that is playing or can be played.
 pub struct AudioSource {
     /// Which specific sample we're currently on.
-    position: usize,
+    position: f32,
     /// Whether we should loop when the sample is done.
     looping: bool,
     /// The actual samples.
     samples: Samples,
 
     gain: f32,
-    //TODO Add this when we have `position: f32`.
-    // pitch: f32,
+    pitch: f32,
 
     /// If we should remove this source when we get the opportunity.
     ///
@@ -40,10 +39,11 @@ pub struct AudioSource {
 impl AudioSource {
     pub fn new(audio: &asset::Audio) -> Self {
         Self {
-            position: 0,
+            position: 0.0,
             looping: false,
             samples: audio.samples(),
             gain: 1.0,
+            pitch: 1.0,
             remove: false,
         }
     }
@@ -51,6 +51,7 @@ impl AudioSource {
     impl_builder!(
         looping: bool,
         gain: f32,
+        pitch: f32,
     );
 }
 
@@ -98,10 +99,13 @@ impl AudioCallback for Audio {
             let samples = source.samples.read().unwrap();
             for x in out.iter_mut() {
                 // Move forward
-                source.position += 1;
-                if source.position >= samples.len() {
+                source.position += source.pitch;
+                let mut position = source.position as usize; // Truncates
+                if position >= samples.len() {
                     if source.looping {
-                        source.position %= samples.len();
+                        position %= samples.len();
+                        // Keep the decimal on source.position
+                        source.position -= (source.position as usize - position) as f32;
                     } else {
                         source.remove = true;
                         continue 'sources;
@@ -109,7 +113,7 @@ impl AudioCallback for Audio {
                 }
 
                 // Write data
-                *x += samples[source.position] * source.gain;
+                *x += samples[position] * source.gain;
             }
         }
 

@@ -72,7 +72,7 @@ fn main() {
 
         if game.input.pressed(Name::PlaySound) {
             // Play an audio asset.
-            game.audio.lock().play(AudioSource::new(&game.assets[bloop]));
+            game.audio.lock().play(AudioSource::new(&game.assets[bloop]).pitch(1.5));
         }
 
         // Move the particle system in a circle. One revolution takes 2*PI seconds.
