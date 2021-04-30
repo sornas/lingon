@@ -89,6 +89,10 @@ impl Audio {
     ///
     /// The source can be created via [AudioSource::new] and modified by builders on [AudioSource]
     /// (like [AudioSource::looping]).
+    ///
+    /// # Panics
+    ///
+    /// Panics if pitch <= 0.0 after applying pitch variance.
     pub fn play(&mut self, mut source: AudioSource) {
         if source.gain_variance != 0.0 {
             source.gain += random::Uniform.between(-source.gain_variance, source.gain_variance);
@@ -96,6 +100,7 @@ impl Audio {
         if source.pitch_variance != 0.0 {
             source.pitch += random::Uniform.between(-source.pitch_variance, source.pitch_variance);
         }
+        assert!(source.pitch > 0.0);
         self.sources.push(source);
     }
 }
