@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 use std::path::Path;
 
+use lingon::audio::AudioSource;
 use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
 use lingon::renderer::{ParticleSystem, Rect, Sprite, Transform};
@@ -71,7 +72,7 @@ fn main() {
 
         if game.input.pressed(Name::PlaySound) {
             // Play an audio asset.
-            game.audio.lock().play(&game.assets[bloop]);
+            game.audio.lock().play(AudioSource::new(&game.assets[bloop]));
         }
 
         // Move the particle system in a circle. One revolution takes 2*PI seconds.
