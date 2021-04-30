@@ -74,7 +74,7 @@ impl Audio {
         let desired = AudioSpecDesired {
             freq: Some(SAMPLE_RATE),
             channels: Some(2),
-            samples: None,
+            samples: Some(1024),
         };
 
         audio_subsystem.open_playback(None, &desired, |spec| {
