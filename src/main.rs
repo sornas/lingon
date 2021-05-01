@@ -36,7 +36,7 @@ fn main() {
     *game.audio.lock().gain_mut() = 0.5;
 
     // Load an image and a sound.
-    let coin = game.assets.load_image(Path::new("res/coin-gold.png").to_path_buf());
+    let transparent = game.assets.load_image(Path::new("res/transparent.png").to_path_buf());
     let bloop = game.assets.load_audio(Path::new("res/bloop.wav").to_path_buf());
     let bloop = AudioSource::new(&game.assets[bloop])
         .gain(0.3)
@@ -45,7 +45,7 @@ fn main() {
         .pitch_variance(0.2);
 
     // Add our image as a sprite sheet.
-    let coin_sheet = game.renderer.add_sprite_sheet(game.assets[coin].clone(), (16, 16));
+    let transparent_sheet = game.renderer.add_sprite_sheet(game.assets[transparent].clone(), (32, 32));
 
     // Create a particle system.
     let mut particle_system = lingon::particle_system!(
@@ -95,8 +95,8 @@ fn main() {
 
         // Get a region of the previously added sprite sheet.
         // The time-dependence effectively creates an animation.
-        let region = game.renderer.sprite_sheets[coin_sheet].grid(
-                [0, 1, 2, 3, 2, 1][((game.total_time() * 10.0) as usize) % 6],
+        let region = game.renderer.sprite_sheets[transparent_sheet].grid(
+                0,
                 0
         );
 
@@ -106,7 +106,7 @@ fn main() {
                 game.renderer.push(
                     Sprite::new(region)
                         .at(x as f32, y as f32)
-                        .scale(0.3, 0.3)
+                        .scale(1.0, 1.0)
                         // Also, spin them around! :D
                         .angle(game.total_time()),
                 );
