@@ -65,6 +65,7 @@ impl AssetSystem {
     }
 
     pub fn reload(&mut self) {
+        // Image assets are reloaded by the renderer, which also uploads them.
         for audio in self.audio.iter_mut() {
             audio.reload();
         }
@@ -87,9 +88,12 @@ impl Index<AudioAssetID> for AssetSystem {
     }
 }
 
+// Number of frames to wait before reload.
+const ASSET_COUNTDOWN: usize = 20;
 #[derive(Clone, Debug)]
 pub struct LoadedFile {
     pub file: PathBuf,
+    pub countdown: usize,
     pub last_modified: SystemTime,
 }
 
@@ -106,6 +110,7 @@ impl LoadedFile {
             Self {
                 file,
                 last_modified,
+                countdown: 0,
             },
             bytes,
         )
@@ -123,11 +128,23 @@ impl LoadedFile {
                 .flatten()
             {
                 Some(last_modified) if last_modified != self.last_modified => {
-                    let bytes = std::fs::read(&self.file).ok();
-                    if bytes.is_some() {
-                        self.last_modified = last_modified;
+                    self.last_modified = last_modified;
+                    self.countdown = 0;
+                    None
+                }
+                Some(_) => {
+                    if self.countdown < ASSET_COUNTDOWN {
+                        self.countdown += 1;
                     }
-                    bytes
+                    if self.countdown == ASSET_COUNTDOWN {
+                        let bytes = std::fs::read(&self.file).ok();
+                        if bytes.is_some() {
+                            self.countdown += 1;
+                        }
+                        bytes
+                    } else {
+                        None
+                    }
                 }
                 _ => None,
             }
