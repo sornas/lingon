@@ -1,8 +1,8 @@
-use luminance_sdl2::sdl2::{self, IntegerOrSdlError, video::WindowPos};
+use luminance_sdl2::sdl2::{self, IntegerOrSdlError, surface::Surface, video::WindowPos};
 use luminance_sdl2::GL33Surface;
 use sdl2::audio::AudioDevice;
 use sdl2::Sdl;
-use std::{ffi::NulError, hash::Hash};
+use std::{ffi::NulError, hash::Hash, path::Path};
 use std::time::Instant;
 
 pub mod audio;
@@ -111,5 +111,17 @@ impl<T: Eq + Hash + Clone> Game<T> {
 
     pub fn set_window_title(&mut self, title: &str) -> Result<(), NulError> {
         self.surface.window_mut().set_title(title)
+    }
+
+    pub fn set_window_icon<P: AsRef<Path>>(&mut self, path: P) {
+        let mut icon = asset::Image::new(path.as_ref().to_path_buf());
+        let icon_surface = Surface::from_data(
+            &mut icon.texture_data,
+            icon.width as u32,
+            icon.height as u32,
+            icon.width as u32 * 4,
+            sdl2::pixels::PixelFormatEnum::RGBA8888,
+        ).unwrap();
+        self.surface.window_mut().set_icon(icon_surface);
     }
 }

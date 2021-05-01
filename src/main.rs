@@ -34,6 +34,7 @@ fn main() {
     let mut game = lingon::Game::new("game", 800, 600);
     bind_inputs(&mut game);
     *game.audio.lock().gain_mut() = 0.5;
+    game.set_window_icon("res/transparent.png");
 
     // Load an image and a sound.
     let transparent = game.assets.load_image(Path::new("res/transparent.png").to_path_buf());
