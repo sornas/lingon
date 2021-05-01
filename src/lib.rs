@@ -2,7 +2,7 @@ use luminance_sdl2::sdl2::{self, IntegerOrSdlError, video::WindowPos};
 use luminance_sdl2::GL33Surface;
 use sdl2::audio::AudioDevice;
 use sdl2::Sdl;
-use std::hash::Hash;
+use std::{ffi::NulError, hash::Hash};
 use std::time::Instant;
 
 pub mod audio;
@@ -103,5 +103,13 @@ impl<T: Eq + Hash + Clone> Game<T> {
             WindowPos::Centered,
             WindowPos::Centered,
         );
+    }
+
+    pub fn window_title(&self) -> &str {
+        self.surface.window().title()
+    }
+
+    pub fn set_window_title(&mut self, title: &str) -> Result<(), NulError> {
+        self.surface.window_mut().set_title(title)
     }
 }

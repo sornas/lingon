@@ -63,6 +63,8 @@ fn main() {
         angle_drag     = [0.0, 2.0]    random::TwoDice,
     );
 
+    let mut i = 0;
+
     'main: loop {
         // Go a step forward in time.
         let delta = game.time_tick();
@@ -80,6 +82,8 @@ fn main() {
             // Play an audio asset.
             game.audio.lock().play(bloop.clone());
             game.center_window();
+            game.set_window_title(&format!("{} {}", i, i*2)).unwrap();
+            i += 1;
         }
 
         if game.input.pressed(Name::Left) {
