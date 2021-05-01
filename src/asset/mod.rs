@@ -25,11 +25,39 @@ use std::time::SystemTime;
 /// A marker type for the unit pixels.
 pub type Pixels = usize;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ImageAssetID(usize);
+macro_rules! impl_deref_and_from_usize {
+    ( $( $asset_type:ident ),* $(,)? ) => {
+        $(
+            #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+            pub struct $asset_type(usize);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct AudioAssetID(usize);
+            impl ::std::ops::Deref for $asset_type {
+                type Target = usize;
+
+                fn deref(&self) -> &Self::Target {
+                    &self.0
+                }
+            }
+
+            impl $asset_type {
+                /// Wrap a usize as an ID.
+                ///
+                /// # Safety
+                ///
+                /// The usize needs to be a valid ID that has previously been returned
+                /// from the asset system.
+                pub unsafe fn from_usize(u: usize) -> Self {
+                    Self(u)
+                }
+            }
+        )*
+    }
+}
+
+impl_deref_and_from_usize!(
+    ImageAssetID,
+    AudioAssetID,
+);
 
 /// If the type of asset type is unknown or doesn't matter.
 pub enum AssetID {
