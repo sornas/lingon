@@ -27,7 +27,7 @@ use crate::asset::{Image, Pixels};
 use crate::renderer::particles::FrozenParticles;
 
 use cgmath::Vector2;
-use luminance::context::GraphicsContext;
+use luminance::{blending::{Blending, Equation, Factor}, context::GraphicsContext};
 use luminance::pipeline::PipelineState;
 use luminance::pixel::NormRGBA8UI;
 use luminance::render_state::RenderState;
@@ -423,7 +423,11 @@ impl Renderer {
                     |pipeline, mut shd_gate| {
                         let bound_tex = pipeline.bind_texture(tex)?;
 
-                        let state = RenderState::default().set_depth_test(None);
+                        let state = RenderState::default().set_depth_test(None).set_blending(Blending {
+                            equation: Equation::Additive,
+                            src: Factor::SrcAlpha,
+                            dst: Factor::SrcAlphaComplement,
+                        });
                         shd_gate.shade(&mut sprite_program, |mut iface, uni, mut rdr_gate| {
                             iface.set(&uni.tex, bound_tex.binding());
                             iface.set(&uni.view, view.into());
