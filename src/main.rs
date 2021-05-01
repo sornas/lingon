@@ -79,6 +79,17 @@ fn main() {
         if game.input.pressed(Name::PlaySound) {
             // Play an audio asset.
             game.audio.lock().play(bloop.clone());
+            game.center_window();
+        }
+
+        if game.input.pressed(Name::Left) {
+            let (sx, sy) = game.window_size();
+            game.set_window_size(sx - 10, sy).unwrap();
+        }
+
+        if game.input.pressed(Name::Right) {
+            let(x, y) = game.window_position();
+            game.set_forced_window_position(x, y + 10)
         }
 
         // Move the particle system in a circle. One revolution takes 2*PI seconds.
