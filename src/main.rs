@@ -34,6 +34,7 @@ fn main() {
     let mut game = lingon::Game::new("game", 800, 600);
     bind_inputs(&mut game);
     *game.audio.lock().gain_mut() = 0.5;
+    game.set_window_icon("res/transparent.png");
 
     // Load an image and a sound.
     let transparent = game.assets.load_image(Path::new("res/transparent.png").to_path_buf());
@@ -63,6 +64,8 @@ fn main() {
         angle_drag     = [0.0, 2.0]    random::TwoDice,
     );
 
+    let mut i = 0;
+
     'main: loop {
         // Go a step forward in time.
         let delta = game.time_tick();
@@ -79,6 +82,19 @@ fn main() {
         if game.input.pressed(Name::PlaySound) {
             // Play an audio asset.
             game.audio.lock().play(bloop.clone());
+            game.center_window();
+            game.set_window_title(&format!("{} {}", i, i*2)).unwrap();
+            i += 1;
+        }
+
+        if game.input.pressed(Name::Left) {
+            let (sx, sy) = game.window_size();
+            game.set_window_size(sx - 10, sy).unwrap();
+        }
+
+        if game.input.pressed(Name::Right) {
+            let(x, y) = game.window_position();
+            game.set_forced_window_position(x, y + 10)
         }
 
         // Move the particle system in a circle. One revolution takes 2*PI seconds.
