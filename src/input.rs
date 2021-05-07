@@ -65,6 +65,9 @@ pub struct InputManager<T> {
     physical_inputs: HashMap<Device, T>,
     virtual_inputs: HashMap<T, KeyState>,
     opened_controllers: HashMap<u32, GameController>,
+    mouse: [i32; 2],
+    /// Since the last frame.
+    mouse_rel: [i32; 2],
 }
 
 /// [i32::MIN, i32::MAX] -> [-1.0, 1.0)
@@ -98,6 +101,8 @@ where
             frame: 0,
             controllers: controllers.clone(),
             opened_controllers: HashMap::new(),
+            mouse: [0, 0],
+            mouse_rel: [0, 0],
         }
     }
 
@@ -182,9 +187,20 @@ where
         }
     }
 
+    /// Returns the current mouse position.
+    pub fn mouse(&self) -> (i32, i32) {
+        (self.mouse[0], self.mouse[1])
+    }
+
+    /// Returns the relative mouse movement this frame.
+    pub fn mouse_rel(&self) -> (i32, i32) {
+        (self.mouse_rel[0], self.mouse_rel[1])
+    }
+
     /// Update the state of the input.
     pub fn poll(&mut self, sdl: &sdl2::Sdl) {
         self.frame += 1;
+        self.mouse_rel = [0, 0];
         let frame = self.frame;
         for event in sdl.event_pump().unwrap().poll_iter() {
             let (input, down) = match event {
@@ -228,8 +244,12 @@ where
                 Event::MouseButtonUp { mouse_btn, .. } => {
                     (Device::Mouse(mouse_btn), KeyState::Up(frame))
                 }
-                Event::MouseMotion { .. } => {
-                    // TODO
+                Event::MouseMotion {
+                    x, y, xrel, yrel, ..
+                } => {
+                    self.mouse = [x, y];
+                    self.mouse_rel[0] += xrel;
+                    self.mouse_rel[1] += yrel;
                     continue;
                 }
                 _ => {
