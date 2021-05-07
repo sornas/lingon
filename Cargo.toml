@@ -11,7 +11,7 @@ edition = "2018"
 [features]
 default = []
 
-bundled = ["luminance-sdl2/bundled"]
+bundled = ["luminance-sdl2/bundled", "luminance-sdl2/static-link"]
 
 [dependencies]
 # NOTE(ed): These version numbers are very precise, cargo tree is your friend.
