@@ -197,7 +197,7 @@ pub trait Tint {
 
 /// A function that renders.
 pub type RenderFn = dyn FnMut(
-    &[Instance],
+    &[Vec<Instance>],
     &[FrozenParticles],
     &mut Tex,
     cgmath::Matrix4<f32>,
@@ -237,7 +237,7 @@ impl Camera {
 pub struct Renderer {
     pub camera: Camera,
     pub render_fn: Box<RenderFn>,
-    pub instances: Vec<Instance>,
+    pub instances: Vec<Vec<Instance>>,
     pub particles: Vec<FrozenParticles>,
     pub tex: Tex,
     pub sprite_sheets: Vec<SpriteSheet>,
@@ -386,18 +386,20 @@ impl Renderer {
             Texture::new(context, SPRITE_SHEET_SIZE, 0, sampler).expect("failed to create texture");
 
         // This function draws the entire frame and is called continuously.
-        let render_fn = move |instances: &[Instance],
+        let render_fn = move |instances: &[Vec<Instance>],
                               systems: &[FrozenParticles],
                               tex: &mut Tex,
                               view: cgmath::Matrix4<f32>,
                               context: &mut GL33Surface| {
-            let triangle = context
+            let triangles: Vec<_> = instances.iter().map(|s| {
+                context
                 .new_tess()
                 .set_vertices(&RECT[..])
-                .set_instances(&instances[..])
+                .set_instances(&s[..])
                 .set_mode(Mode::Triangle)
                 .build()
-                .unwrap();
+                .unwrap()
+            }).collect();
 
             let particles: Vec<_> = systems
                 .iter()
@@ -428,24 +430,31 @@ impl Renderer {
                             src: Factor::SrcAlpha,
                             dst: Factor::SrcAlphaComplement,
                         });
-                        shd_gate.shade(&mut sprite_program, |mut iface, uni, mut rdr_gate| {
-                            iface.set(&uni.tex, bound_tex.binding());
-                            iface.set(&uni.view, view.into());
 
-                            rdr_gate.render(&state, |mut tess_gate| tess_gate.render(&triangle))
-                        })?;
+                        for i in 0..triangles.len().max(particles.len()) {
+                            if let Some(triangle) = triangles.get(i) {
+                                shd_gate.shade(&mut sprite_program, |mut iface, uni, mut rdr_gate| {
+                                    iface.set(&uni.tex, bound_tex.binding());
+                                    iface.set(&uni.view, view.into());
 
-                        shd_gate.shade(&mut particle_program, |mut iface, uni, mut rdr_gate| {
-                            iface.set(&uni.tex, bound_tex.binding());
-                            iface.set(&uni.view, view.into());
-                            rdr_gate.render(&state, |mut tess_gate| {
-                                for (t, p) in particles {
-                                    iface.set(&uni.t, t);
-                                    tess_gate.render(&p)?;
-                                }
-                                Ok(())
-                            })
-                        })
+                                    rdr_gate.render(&state, |mut tess_gate| tess_gate.render(triangle))
+                                })?;
+                            }
+
+                            if let Some((t, p)) = particles.get(i) {
+                                shd_gate.shade(&mut particle_program, |mut iface, uni, mut rdr_gate| {
+                                    iface.set(&uni.tex, bound_tex.binding());
+                                    iface.set(&uni.view, view.into());
+                                    rdr_gate.render(&state, |mut tess_gate| {
+                                        iface.set(&uni.t, *t);
+                                        tess_gate.render(p)?;
+                                        Ok(())
+                                    })
+                                })?;
+                            }
+                        }
+
+                        Ok(())
                     },
                 )
                 .assume();
@@ -461,7 +470,7 @@ impl Renderer {
         Self {
             camera: Camera::new(),
             render_fn: Box::new(render_fn),
-            instances: Vec::new(),
+            instances: vec![Vec::new()],
             tex,
             sprite_sheets: Vec::new(),
             particles: Vec::new(),
@@ -470,12 +479,13 @@ impl Renderer {
 
     /// Queues the stamp for rendering.
     pub fn push<T: Stamp>(&mut self, stamp: T) {
-        self.instances.push(stamp.stamp());
+        self.instances.last_mut().unwrap().push(stamp.stamp());
     }
 
     /// Queues the particle_systems for rendering.
     pub fn push_particle_system(&mut self, system: &ParticleSystem) {
         self.particles.push(system.freeze());
+        self.instances.push(Vec::new());
     }
 
     /// Registers an image as a new sprite sheet with the specified tile size.
@@ -514,7 +524,7 @@ impl Renderer {
             self.camera.matrix(),
             context,
         );
-        self.instances.clear();
+        self.instances = vec![Vec::new()];
         self.particles.clear();
         res
     }
