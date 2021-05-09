@@ -68,8 +68,7 @@ fn main() {
 
     'main: loop {
         // Go a step forward in time.
-        let delta = game.time_tick();
-        game.update(delta);
+        game.update();
 
         // Poll input and time it.
         let timer = lingon::counter!("input");
@@ -107,7 +106,7 @@ fn main() {
         }
 
         // Simulate the particle system.
-        particle_system.update(delta);
+        particle_system.update(game.delta());
 
         // Get a region of the previously added sprite sheet.
         // The time-dependence effectively creates an animation.
@@ -149,8 +148,8 @@ fn main() {
 
         // Tell the renderer to move the camera.
         game.renderer.camera.move_by(
-            (game.input.value(Name::Right) - game.input.value(Name::Left)) * delta,
-            (game.input.value(Name::Up) - game.input.value(Name::Down)) * delta,
+            (game.input.value(Name::Right) - game.input.value(Name::Left)) * game.delta(),
+            (game.input.value(Name::Up) - game.input.value(Name::Down)) * game.delta(),
         );
 
         // Draw this frame.

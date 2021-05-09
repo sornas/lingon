@@ -21,6 +21,7 @@ pub struct Game<T> {
 
     surface: GL33Surface,
     start_t: Instant,
+    delta: f32,
     prev_t: f32,
 }
 
@@ -49,11 +50,16 @@ impl<T: Eq + Hash + Clone> Game<T> {
 
             surface,
             start_t: Instant::now(),
+            delta: 0.0,
             prev_t: 0.0,
         }
     }
 
-    pub fn update(&mut self, _delta: f32) {
+    pub fn update(&mut self) {
+        let t = self.start_t.elapsed().as_millis() as f32 * 1e-3;
+        self.delta = t - self.prev_t;
+        self.prev_t = t;
+
         performance::frame();
         self.assets.reload();
         self.renderer.reload();
@@ -68,11 +74,8 @@ impl<T: Eq + Hash + Clone> Game<T> {
         self.surface.sdl()
     }
 
-    pub fn time_tick(&mut self) -> f32 {
-        let t = self.start_t.elapsed().as_millis() as f32 * 1e-3;
-        let delta = t - self.prev_t;
-        self.prev_t = t;
-        delta
+    pub fn delta(&self) -> f32 {
+        self.delta
     }
 
     pub fn total_time(&self) -> f32 {
