@@ -179,6 +179,7 @@ impl Collector {
     }
 
     pub fn log(&mut self) {
+        return;
         println!("PERFORMANCE: #{}\nthis: {:<5.5} wgh: {:<5.5} avg: {:<5.5} min: {:<5.5} max: {:<5.5}",
             self.num_frames,
             self.last_time,
