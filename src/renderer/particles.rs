@@ -206,6 +206,12 @@ impl ParticleSystem {
         });
     }
 
+    pub fn spawn_many(&mut self, amount: u32) {
+        for _ in 0..amount {
+            self.spawn();
+        }
+    }
+
     /// Copies out the rendering information.
     pub fn freeze(&self) -> FrozenParticles {
         // TODO(ed): Can we get rid of this clone?
