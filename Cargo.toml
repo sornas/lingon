@@ -14,6 +14,11 @@ default = []
 bundled = ["luminance-sdl2/bundled"]
 
 [dependencies]
+lazy_static = "1"
+lingon_macro = { path = "lingon_macro" }
+stb_image = "0.2"
+sungod = "0.3"
+wav = "0.6"
 
 # NOTE(ed): These version numbers are very precise, cargo tree is your friend.
 cgmath = "0.18.0"
@@ -21,9 +26,3 @@ luminance = "0.43.2"
 luminance-derive = "0.6.1"
 luminance-sdl2 = { version = "0.2.1", default-features = false }
 luminance-windowing = "0.9.3"
-
-lazy_static = "1"
-lingon_macro = { path = "lingon_macro" }
-stb_image = "0.2"
-sungod = "0.3"
-wav = "0.6"
