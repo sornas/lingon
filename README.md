@@ -16,3 +16,4 @@ There are two ways this engine can be used:
  - Particles. Lots and lots of particles
  - Fast build times. Dependencies are kept to a minimum to make it quick to get started
  - Written in Rust
+
