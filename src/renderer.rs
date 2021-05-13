@@ -391,11 +391,11 @@ impl Renderer {
                               tex: &mut Tex,
                               view: cgmath::Matrix4<f32>,
                               context: &mut GL33Surface| {
-            let triangles: Vec<_> = instances.iter().map(|s| {
+            let triangles: Vec<_> = instances.iter().map(|i| {
                 context
                 .new_tess()
                 .set_vertices(&RECT[..])
-                .set_instances(&s[..])
+                .set_instances(&i[..])
                 .set_mode(Mode::Triangle)
                 .build()
                 .unwrap()
