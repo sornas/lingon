@@ -39,8 +39,7 @@ use sdl2::event::{Event, WindowEvent};
 use std::collections::HashMap;
 use std::hash::Hash;
 
-/// All the different kinds of input device we can listen
-/// for.
+/// All the different kinds of input devices we can listen to.
 #[derive(Hash, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Device {
     /// The magic quit event, when the window is closed.
@@ -66,7 +65,7 @@ pub struct InputManager<T> {
     virtual_inputs: HashMap<T, KeyState>,
     opened_controllers: HashMap<u32, GameController>,
     mouse: [i32; 2],
-    /// Since the last frame.
+    /// Since the last call to [InputManager::poll].
     mouse_rel: [i32; 2],
 }
 
@@ -75,7 +74,7 @@ fn remap(value: i16) -> f32 {
     // MIN has a larger absolute value,
     // this garantees that the values in [-1, 1).
     let value = -(value as f32) / (i16::MIN as f32);
-    // Arbitrarily choosen
+    // Arbitrarily chosen
     const DEADZONE: f32 = 0.10;
     if value.abs() < DEADZONE {
         0.0
@@ -192,7 +191,8 @@ where
         (self.mouse[0], self.mouse[1])
     }
 
-    /// Returns the relative mouse movement this frame.
+    /// Returns the relative mouse movement since the last call to
+    /// [InputManager::poll].
     pub fn mouse_rel(&self) -> (i32, i32) {
         (self.mouse_rel[0], self.mouse_rel[1])
     }
