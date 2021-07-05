@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use crate::asset::{self, audio::Samples};
 use crate::random::{self, Distribute};
 
@@ -25,7 +27,7 @@ pub struct AudioSource {
     /// Whether we should loop when the sample is done.
     looping: bool,
     /// The actual samples.
-    samples: Samples,
+    samples: Arc<RwLock<Samples>>,
 
     gain: f32,
     gain_variance: f32,
@@ -65,7 +67,7 @@ impl AudioSource {
 
 /// The audio subsystem.
 pub struct Audio {
-    sources: Vec<AudioSource>, 
+    sources: Vec<AudioSource>,
     gain: f32,
 }
 
@@ -130,9 +132,9 @@ impl AudioCallback for Audio {
                 // Move forward
                 source.position += source.pitch;
                 let mut position = source.position as usize; // Truncates
-                if position >= samples.len() {
+                if position >= samples.data().len() {
                     if source.looping {
-                        position %= samples.len();
+                        position %= samples.data().len();
                         // Keep the decimal on source.position
                         source.position -= (source.position as usize - position) as f32;
                     } else {
@@ -142,7 +144,7 @@ impl AudioCallback for Audio {
                 }
 
                 // Write data
-                *x += samples[position] * source.gain * self.gain;
+                *x += samples.data()[position] * source.gain * self.gain;
             }
         }
 
