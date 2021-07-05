@@ -109,6 +109,7 @@ impl Audio {
         }
 
         let mut samples = Vec::new();
+        // Read interleaved audio.
         while let Ok(Some(frame)) = reader.read_dec_packet_itl() {
             samples.append(&mut frame.into_iter().map(|i| i as f32 / i16::MAX as f32).collect());
         }
