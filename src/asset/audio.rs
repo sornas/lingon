@@ -1,6 +1,7 @@
 use super::LoadedFile;
 
 use std::convert::{TryFrom, TryInto};
+use std::io::Cursor;
 use std::{ops::Deref, path::PathBuf};
 use std::sync::{Arc, RwLock};
 
@@ -74,13 +75,14 @@ impl Audio {
     }
 
     pub fn load_data(&mut self, bytes: Vec<u8>) {
-        match self.kind {
-            AudioFileKind::Ogg => self.load_ogg(bytes),
-            AudioFileKind::Wav => self.load_wav(bytes),
-        }
+        let samples = match self.kind {
+            AudioFileKind::Ogg => self.samples_ogg(bytes),
+            AudioFileKind::Wav => self.samples_wav(bytes),
+        };
+        *self.samples.write().unwrap() = samples;
     }
 
-    pub fn load_wav(&mut self, bytes: Vec<u8>) {
+    pub fn samples_wav(&mut self, bytes: Vec<u8>) -> Vec<f32> {
         let (header, data) = wav::read(&mut std::io::Cursor::new(bytes)).unwrap();
         if header.sampling_rate as i32 != crate::audio::SAMPLE_RATE {
             println!(
@@ -89,14 +91,18 @@ impl Audio {
                  header.sampling_rate,
             );
         }
-        let mut samples = self.samples.write().unwrap();
         match data {
-            wav::BitDepth::ThirtyTwoFloat(data) => *samples = data,
+            wav::BitDepth::ThirtyTwoFloat(data) => data,
             _ => todo!("Only WAV containing floats are currently supported"),
         }
     }
 
-    pub fn load_ogg(&mut self, bytes: Vec<u8>) {
-        todo!();
+    pub fn samples_ogg(&mut self, bytes: Vec<u8>) -> Vec<f32> {
+        let mut reader = lewton::inside_ogg::OggStreamReader::new(Cursor::new(&bytes)).unwrap();
+        let mut samples = Vec::new();
+        while let Ok(Some(frame)) = reader.read_dec_packet_itl() {
+            samples.append(&mut frame.into_iter().map(|i| i as f32 / i16::MAX as f32).collect());
+        }
+        samples
     }
 }
