@@ -130,7 +130,7 @@ impl AudioCallback for Audio {
             let samples = source.samples.read().unwrap();
             for x in out.iter_mut() {
                 // Move forward
-                source.position += source.pitch;
+                source.position += source.pitch * samples.sample_rate() as f32 / SAMPLE_RATE as f32 ;
                 let mut position = source.position as usize; // Truncates
                 if position >= samples.data().len() {
                     if source.looping {

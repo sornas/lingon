@@ -38,7 +38,7 @@ fn main() {
 
     // Load an image and a sound.
     let transparent = game.assets.load_image(Path::new("res/transparent.png").to_path_buf());
-    let bloop = game.assets.load_audio(Path::new("res/bloop.wav").to_path_buf());
+    let bloop = game.assets.load_audio(Path::new("res/bloop-32khz.wav").to_path_buf());
     let bloop = AudioSource::new(&game.assets[bloop])
         .gain(0.3)
         .gain_variance(0.2)
