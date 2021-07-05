@@ -84,7 +84,7 @@ impl Audio {
 
     pub fn samples_wav(&mut self, bytes: Vec<u8>) -> Vec<f32> {
         let (header, data) = wav::read(&mut std::io::Cursor::new(bytes)).unwrap();
-        if header.sampling_rate as i32 != crate::audio::SAMPLE_RATE {
+        if header.sampling_rate != crate::audio::SAMPLE_RATE as u32 {
             println!(
                 "warn: {} contains non-supported sample rate {}\nwarn: only 48000 is currently supported",
                  self.data.file.display(),
@@ -99,6 +99,15 @@ impl Audio {
 
     pub fn samples_ogg(&mut self, bytes: Vec<u8>) -> Vec<f32> {
         let mut reader = lewton::inside_ogg::OggStreamReader::new(Cursor::new(&bytes)).unwrap();
+        let sample_rate = reader.ident_hdr.audio_sample_rate;
+        if sample_rate != crate::audio::SAMPLE_RATE as u32 {
+            println!(
+                "warn: {} contains non-supported sample rate {}\nwarn: only 48000 is currently supported",
+                 self.data.file.display(),
+                 sample_rate,
+            );
+        }
+
         let mut samples = Vec::new();
         while let Ok(Some(frame)) = reader.read_dec_packet_itl() {
             samples.append(&mut frame.into_iter().map(|i| i as f32 / i16::MAX as f32).collect());

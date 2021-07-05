@@ -65,7 +65,7 @@ impl AudioSource {
 
 /// The audio subsystem.
 pub struct Audio {
-    sources: Vec<AudioSource>, 
+    sources: Vec<AudioSource>,
     gain: f32,
 }
 
