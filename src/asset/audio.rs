@@ -1,7 +1,26 @@
 use super::LoadedFile;
 
+use std::convert::{TryFrom, TryInto};
 use std::{ops::Deref, path::PathBuf};
 use std::sync::{Arc, RwLock};
+
+/// The different kinds of files we can open.
+enum AudioFileKind {
+    Ogg,
+    Wav,
+}
+
+impl TryFrom<&str> for AudioFileKind {
+    type Error = ();
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "ogg" => Ok(AudioFileKind::Ogg),
+            "wav" => Ok(AudioFileKind::Wav),
+            _ => Err(()),
+        }
+    }
+}
 
 /// Actual audio data.
 #[derive(Clone)]
@@ -24,17 +43,20 @@ impl Deref for Samples {
 pub struct Audio {
     samples: Samples,
     data: LoadedFile,
+    kind: AudioFileKind,
 }
 
 impl Audio {
-    pub fn new(file: PathBuf) -> Self {
+    pub fn new(file: PathBuf) -> Option<Self> {
+        let kind: AudioFileKind = file.extension()?.to_str()?.try_into().ok()?;
         let (data, bytes) = LoadedFile::new(file);
         let mut ret = Self {
             samples: Samples::new(),
             data,
+            kind,
         };
         ret.load_data(bytes);
-        ret
+        Some(ret)
     }
 
     pub fn samples(&self) -> Samples {
@@ -52,6 +74,13 @@ impl Audio {
     }
 
     pub fn load_data(&mut self, bytes: Vec<u8>) {
+        match self.kind {
+            AudioFileKind::Ogg => self.load_ogg(bytes),
+            AudioFileKind::Wav => self.load_wav(bytes),
+        }
+    }
+
+    pub fn load_wav(&mut self, bytes: Vec<u8>) {
         let (header, data) = wav::read(&mut std::io::Cursor::new(bytes)).unwrap();
         if header.sampling_rate as i32 != crate::audio::SAMPLE_RATE {
             println!(
@@ -65,5 +94,9 @@ impl Audio {
             wav::BitDepth::ThirtyTwoFloat(data) => *samples = data,
             _ => todo!("Only WAV containing floats are currently supported"),
         }
+    }
+
+    pub fn load_ogg(&mut self, bytes: Vec<u8>) {
+        todo!();
     }
 }
