@@ -6,6 +6,8 @@ use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
 use lingon::renderer::{ParticleSystem, Rect, Sprite, Transform};
 
+use luminance_glyph::{Section, Text};
+
 /// A list of all valid inputs.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Name {
@@ -131,9 +133,17 @@ fn main() {
             }
         }
 
-        // let text = Text::new("Blargh").at(0.0, 0.0);
-        // game.renderer.push(text);
-
+        let section = Section::default()
+            .add_text(
+                Text::new("Hello Luminance")
+                .with_color([1.0, 1.0, 1.0, 1.0])
+                .with_scale(80.0))
+            .add_text(
+                Text::new("Glyph")
+                .with_color([1.0, 0.0, 0.0, 1.0])
+                .with_scale(80.0 + game.total_time().sin() * 20.0))
+        ;
+        game.renderer.push_text(section);
 
         // Simulate a Square distribution...
         const NUM_BUCKETS: usize = 100;

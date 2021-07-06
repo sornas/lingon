@@ -27,7 +27,6 @@ use crate::asset::{Image, Font, Pixels};
 use crate::renderer::particles::FrozenParticles;
 use luminance_glyph::{
     Section,
-    Text,
     FontId,
     GlyphBrush,
     GlyphBrushBuilder,
@@ -442,6 +441,10 @@ impl Renderer {
         self.font.add_font(font.font)
     }
 
+    pub fn push_text(&mut self, section: Section) {
+        self.font.queue(section);
+    }
+
     /// Reload all assets that the renderer owns.
     ///
     /// Currently this means as sprite sheets.
@@ -481,15 +484,6 @@ impl Renderer {
                 )
             })
         .collect();
-
-
-        self.font.queue(
-            Section::default().add_text(
-                Text::new("Hello Luminance Glyph")
-                .with_color([1.0, 1.0, 1.0, 1.0])
-                .with_scale(80.0),
-            ),
-        );
 
         self.font.process_queued(context);
 
