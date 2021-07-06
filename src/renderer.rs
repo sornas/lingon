@@ -26,6 +26,8 @@ pub use crate::renderer::particles::ParticleSystem;
 use crate::asset::{Image, Font, Pixels};
 use crate::renderer::particles::FrozenParticles;
 use luminance_glyph::{
+    Section,
+    Text,
     FontId,
     GlyphBrush,
     GlyphBrushBuilder,
@@ -480,12 +482,23 @@ impl Renderer {
             })
         .collect();
 
+
+        self.font.queue(
+            Section::default().add_text(
+                Text::new("Hello Luminance Glyph")
+                .with_color([1.0, 1.0, 1.0, 1.0])
+                .with_scale(80.0),
+            ),
+        );
+
+        self.font.process_queued(context);
+
         let render = context
             .new_pipeline_gate()
             .pipeline(
                 &back_buffer,
                 &PipelineState::default(),
-                |pipeline, mut shd_gate| {
+                |mut pipeline, mut shd_gate| {
                     let bound_tex = pipeline.bind_texture(&mut self.tex)?;
 
                     let state = RenderState::default().set_depth_test(None).set_blending(Blending {
@@ -515,6 +528,10 @@ impl Renderer {
                             })?;
                         }
                     }
+
+                    self.font
+                        .draw_queued(&mut pipeline, &mut shd_gate, 1024, 720)
+                        .expect("failed to render glyphs");
 
                     Ok(())
                 },
