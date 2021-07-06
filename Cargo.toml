@@ -19,6 +19,7 @@ lingon_macro = { path = "lingon_macro" }
 stb_image = "0.2"
 sungod = "0.3"
 wav = "0.6"
+luminance-glyph = "0.2.0"
 
 # NOTE(ed): These version numbers are very precise, cargo tree is your friend.
 cgmath = "0.18.0"

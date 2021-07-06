@@ -14,9 +14,11 @@
 
 pub mod audio;
 pub mod image;
+pub mod font;
 
 pub use audio::Audio;
 pub use image::Image;
+pub use font::Font;
 
 use std::ops::Index;
 use std::path::PathBuf;
@@ -54,20 +56,24 @@ macro_rules! impl_deref_and_from_usize {
     }
 }
 
+// TODO(ed): Make this into a macro?
 impl_deref_and_from_usize!(
     ImageAssetID,
     AudioAssetID,
+    FontAssetID,
 );
 
 /// If the type of asset type is unknown or doesn't matter.
 pub enum AssetID {
     Image(ImageAssetID),
     Audio(AudioAssetID),
+    Font(FontAssetID),
 }
 
 pub struct AssetSystem {
     images: Vec<Image>,
     audio: Vec<Audio>,
+    fonts: Vec<Font>,
 }
 
 impl AssetSystem {
@@ -75,6 +81,7 @@ impl AssetSystem {
         Self {
             images: Vec::new(),
             audio: Vec::new(),
+            fonts: Vec::new(),
         }
     }
 
@@ -92,8 +99,16 @@ impl AssetSystem {
         AudioAssetID(id)
     }
 
+    /// Load a new font from disk.
+    pub fn load_font(&mut self, file: PathBuf) -> FontAssetID {
+        let id = self.audio.len();
+        self.fonts.push(Font::new(file));
+        FontAssetID(id)
+    }
+
+
     pub fn reload(&mut self) {
-        // Image assets are reloaded by the renderer, which also uploads them.
+        // Image and Font assets are reloaded by the renderer, which also uploads them.
         for audio in self.audio.iter_mut() {
             audio.reload();
         }
@@ -113,6 +128,14 @@ impl Index<AudioAssetID> for AssetSystem {
 
     fn index(&self, id: AudioAssetID) -> &Self::Output {
         self.audio.get(id.0).expect(&format!("Invalid audio asset {}", id.0))
+    }
+}
+
+impl Index<FontAssetID> for AssetSystem {
+    type Output = Font;
+
+    fn index(&self, id: FontAssetID) -> &Self::Output {
+        self.fonts.get(id.0).expect(&format!("Invalid font asset {}", id.0))
     }
 }
 

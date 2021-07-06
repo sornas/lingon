@@ -45,6 +45,8 @@ fn main() {
         .pitch(1.5)
         .pitch_variance(0.2);
 
+    let font = game.assets.load_font(Path::new("res/noto-sans.ttf").to_path_buf());
+
     // Add our image as a sprite sheet.
     let transparent_sheet = game.renderer.add_sprite_sheet(game.assets[transparent].clone(), (32, 32));
 
