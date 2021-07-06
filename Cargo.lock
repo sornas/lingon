@@ -302,6 +302,7 @@ dependencies = [
  "lingon_macro",
  "luminance",
  "luminance-derive",
+ "luminance-gl",
  "luminance-glyph",
  "luminance-sdl2",
  "luminance-windowing",
