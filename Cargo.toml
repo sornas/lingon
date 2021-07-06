@@ -25,6 +25,5 @@ luminance-glyph = "0.2.0"
 cgmath = "0.18.0"
 luminance = "0.43.2"
 luminance-derive = "0.6.1"
-luminance-gl = "0.16.1"
 luminance-sdl2 = { version = "0.2.1", default-features = false }
 luminance-windowing = "0.9.3"
