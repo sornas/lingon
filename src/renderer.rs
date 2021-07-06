@@ -23,8 +23,14 @@
 
 pub use crate::renderer::particles::ParticleSystem;
 
-use crate::asset::{Image, Pixels};
+use crate::asset::{Image, Font, Pixels};
 use crate::renderer::particles::FrozenParticles;
+use luminance_glyph::{
+    FontId,
+    GlyphBrush,
+    GlyphBrushBuilder,
+    ab_glyph::FontArc,
+};
 
 use cgmath::Vector2;
 use luminance::{blending::{Blending, Equation, Factor}, context::GraphicsContext};
@@ -35,7 +41,6 @@ use luminance::tess::Mode;
 use luminance::shader::Program;
 use luminance::texture::{Dim3, GenMipmaps, Sampler, Texture};
 use luminance_sdl2::GL33Surface;
-use luminance_gl::gl33::GL33;
 
 pub mod particles;
 mod prelude;
@@ -43,10 +48,12 @@ mod prelude;
 // Me no likey, but at least it's not documented.
 use crate::renderer::prelude::*;
 
+// TODO(ed): Use the fancy macro mod asset
 pub type SpriteSheetID = usize;
 
 /// Type used to simplify some types.
-pub type Tex = Texture<<GL33Surface as GraphicsContext>::Backend, Dim3, NormRGBA8UI>;
+pub type GLVer = <GL33Surface as GraphicsContext>::Backend;
+pub type Tex = Texture<GLVer, Dim3, NormRGBA8UI>;
 
 /// Vertex shader source code.
 const VS_STR: &str = include_str!("vs.glsl");
@@ -226,7 +233,7 @@ impl Camera {
     }
 }
 
-type ShaderProgram = Program<GL33, VertexSemantics, (), ShaderInterface>;
+type ShaderProgram = Program<GLVer, VertexSemantics, (), ShaderInterface>;
 
 /// A big struct holding all the rendering state.
 pub struct Renderer {
@@ -235,6 +242,7 @@ pub struct Renderer {
     pub particles: Vec<FrozenParticles>,
     pub tex: Tex,
     pub sprite_sheets: Vec<SpriteSheet>,
+    pub font: GlyphBrush<GLVer>,
 
     pub sprite_program: ShaderProgram,
     pub particle_program: ShaderProgram,
@@ -365,13 +373,13 @@ impl Renderer {
     pub fn new(context: &mut GL33Surface, sampler: Sampler) -> Self {
 
         // Setup shader programs.
-        let mut sprite_program = context
+        let sprite_program = context
             .new_shader_program::<VertexSemantics, (), ShaderInterface>()
             .from_strings(VS_STR, None, None, FS_STR)
             .unwrap()
             .ignore_warnings();
 
-        let mut particle_program = context
+        let particle_program = context
             .new_shader_program::<VertexSemantics, (), ShaderInterface>()
             .from_strings(VS_PARTICLE_STR, None, None, FS_STR)
             .unwrap()
@@ -386,6 +394,12 @@ impl Renderer {
             tex,
             sprite_sheets: Vec::new(),
             particles: Vec::new(),
+            font: GlyphBrushBuilder::using_font(
+                // We forcefully include a default font,
+                // if you don't load any yourself.
+                // luminance_glyph requires ONE font.
+                FontArc::try_from_slice(include_bytes!("../res/noto-sans.ttf")).unwrap()
+                ).build(context),
 
             sprite_program,
             particle_program,
@@ -420,6 +434,10 @@ impl Renderer {
         sheet.upload(&mut self.tex);
         self.sprite_sheets.push(sheet);
         id
+    }
+
+    pub fn add_font(&mut self, font: Font) -> FontId {
+        self.font.add_font(font.font)
     }
 
     /// Reload all assets that the renderer owns.

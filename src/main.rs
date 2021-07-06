@@ -46,6 +46,7 @@ fn main() {
         .pitch_variance(0.2);
 
     let font = game.assets.load_font(Path::new("res/noto-sans.ttf").to_path_buf());
+    let font = game.renderer.add_font(game.assets[font].clone());
 
     // Add our image as a sprite sheet.
     let transparent_sheet = game.renderer.add_sprite_sheet(game.assets[transparent].clone(), (32, 32));
@@ -129,6 +130,10 @@ fn main() {
                 );
             }
         }
+
+        // let text = Text::new("Blargh").at(0.0, 0.0);
+        // game.renderer.push(text);
+
 
         // Simulate a Square distribution...
         const NUM_BUCKETS: usize = 100;

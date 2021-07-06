@@ -101,7 +101,7 @@ impl AssetSystem {
 
     /// Load a new font from disk.
     pub fn load_font(&mut self, file: PathBuf) -> FontAssetID {
-        let id = self.audio.len();
+        let id = self.fonts.len();
         self.fonts.push(Font::new(file));
         FontAssetID(id)
     }
