@@ -400,7 +400,7 @@ impl Renderer {
                 // if you don't load any yourself.
                 // luminance_glyph requires ONE font.
                 FontArc::try_from_slice(include_bytes!("../res/noto-sans.ttf")).unwrap()
-                ).build(context),
+            ).build(context),
 
             sprite_program,
             particle_program,
