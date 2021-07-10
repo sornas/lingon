@@ -23,8 +23,15 @@
 
 pub use crate::renderer::particles::ParticleSystem;
 
-use crate::asset::{Image, Pixels};
+use crate::asset::{Image, Font, Pixels};
 use crate::renderer::particles::FrozenParticles;
+use luminance_glyph::{
+    Section,
+    FontId,
+    GlyphBrush,
+    GlyphBrushBuilder,
+    ab_glyph::FontArc,
+};
 
 use cgmath::Vector2;
 use luminance::{blending::{Blending, Equation, Factor}, context::GraphicsContext};
@@ -32,6 +39,7 @@ use luminance::pipeline::PipelineState;
 use luminance::pixel::NormRGBA8UI;
 use luminance::render_state::RenderState;
 use luminance::tess::Mode;
+use luminance::shader::Program;
 use luminance::texture::{Dim3, GenMipmaps, Sampler, Texture};
 use luminance_sdl2::GL33Surface;
 
@@ -41,10 +49,12 @@ mod prelude;
 // Me no likey, but at least it's not documented.
 use crate::renderer::prelude::*;
 
+// TODO(ed): Use the fancy macro mod asset
 pub type SpriteSheetID = usize;
 
 /// Type used to simplify some types.
-pub type Tex = Texture<<GL33Surface as GraphicsContext>::Backend, Dim3, NormRGBA8UI>;
+pub type GLVer = <GL33Surface as GraphicsContext>::Backend;
+pub type Tex = Texture<GLVer, Dim3, NormRGBA8UI>;
 
 /// Vertex shader source code.
 const VS_STR: &str = include_str!("vs.glsl");
@@ -195,15 +205,6 @@ pub trait Tint {
     }
 }
 
-/// A function that renders.
-pub type RenderFn = dyn FnMut(
-    &[Vec<Instance>],
-    &[FrozenParticles],
-    &mut Tex,
-    cgmath::Matrix4<f32>,
-    &mut GL33Surface,
-) -> Result<(), ()>;
-
 /// From where you see the world. Can be moved around via [Transform].
 pub struct Camera {
     position: Vector2<f32>,
@@ -233,14 +234,19 @@ impl Camera {
     }
 }
 
+type ShaderProgram = Program<GLVer, VertexSemantics, (), ShaderInterface>;
+
 /// A big struct holding all the rendering state.
 pub struct Renderer {
     pub camera: Camera,
-    pub render_fn: Box<RenderFn>,
     pub instances: Vec<Vec<Instance>>,
     pub particles: Vec<FrozenParticles>,
     pub tex: Tex,
     pub sprite_sheets: Vec<SpriteSheet>,
+    pub font: GlyphBrush<GLVer>,
+
+    pub sprite_program: ShaderProgram,
+    pub particle_program: ShaderProgram,
 }
 
 /// If something can be rendered, it has to be Stamp.
@@ -366,17 +372,15 @@ impl Sprite {
 impl Renderer {
     /// Create a new Render instance.
     pub fn new(context: &mut GL33Surface, sampler: Sampler) -> Self {
-        let back_buffer = context.back_buffer().unwrap();
 
         // Setup shader programs.
-
-        let mut sprite_program = context
+        let sprite_program = context
             .new_shader_program::<VertexSemantics, (), ShaderInterface>()
             .from_strings(VS_STR, None, None, FS_STR)
             .unwrap()
             .ignore_warnings();
 
-        let mut particle_program = context
+        let particle_program = context
             .new_shader_program::<VertexSemantics, (), ShaderInterface>()
             .from_strings(VS_PARTICLE_STR, None, None, FS_STR)
             .unwrap()
@@ -385,95 +389,21 @@ impl Renderer {
         let tex: Tex =
             Texture::new(context, SPRITE_SHEET_SIZE, 0, sampler).expect("failed to create texture");
 
-        // This function draws the entire frame and is called continuously.
-        let render_fn = move |instances: &[Vec<Instance>],
-                              systems: &[FrozenParticles],
-                              tex: &mut Tex,
-                              view: cgmath::Matrix4<f32>,
-                              context: &mut GL33Surface| {
-            let triangles: Vec<_> = instances.iter().map(|i| {
-                context
-                .new_tess()
-                .set_vertices(&RECT[..])
-                .set_instances(&i[..])
-                .set_mode(Mode::Triangle)
-                .build()
-                .unwrap()
-            }).collect();
-
-            let particles: Vec<_> = systems
-                .iter()
-                .map(|s| {
-                    (
-                        s.time,
-                        context
-                            .new_tess()
-                            .set_vertices(&RECT[..])
-                            .set_instances(&s.particles[..])
-                            .set_mode(Mode::Triangle)
-                            .build()
-                            .unwrap(),
-                    )
-                })
-                .collect();
-
-            let render = context
-                .new_pipeline_gate()
-                .pipeline(
-                    &back_buffer,
-                    &PipelineState::default(),
-                    |pipeline, mut shd_gate| {
-                        let bound_tex = pipeline.bind_texture(tex)?;
-
-                        let state = RenderState::default().set_depth_test(None).set_blending(Blending {
-                            equation: Equation::Additive,
-                            src: Factor::SrcAlpha,
-                            dst: Factor::SrcAlphaComplement,
-                        });
-
-                        for i in 0..triangles.len().max(particles.len()) {
-                            if let Some(triangle) = triangles.get(i) {
-                                shd_gate.shade(&mut sprite_program, |mut iface, uni, mut rdr_gate| {
-                                    iface.set(&uni.tex, bound_tex.binding());
-                                    iface.set(&uni.view, view.into());
-
-                                    rdr_gate.render(&state, |mut tess_gate| tess_gate.render(triangle))
-                                })?;
-                            }
-
-                            if let Some((t, p)) = particles.get(i) {
-                                shd_gate.shade(&mut particle_program, |mut iface, uni, mut rdr_gate| {
-                                    iface.set(&uni.tex, bound_tex.binding());
-                                    iface.set(&uni.view, view.into());
-                                    rdr_gate.render(&state, |mut tess_gate| {
-                                        iface.set(&uni.t, *t);
-                                        tess_gate.render(p)?;
-                                        Ok(())
-                                    })
-                                })?;
-                            }
-                        }
-
-                        Ok(())
-                    },
-                )
-                .assume();
-
-            if render.is_ok() {
-                context.window().gl_swap_window();
-                Ok(())
-            } else {
-                Err(())
-            }
-        };
-
         Self {
             camera: Camera::new(),
-            render_fn: Box::new(render_fn),
             instances: vec![Vec::new()],
             tex,
             sprite_sheets: Vec::new(),
             particles: Vec::new(),
+            font: GlyphBrushBuilder::using_font(
+                // We forcefully include a default font,
+                // if you don't load any yourself.
+                // luminance_glyph requires ONE font.
+                FontArc::try_from_slice(include_bytes!("../res/noto-sans.ttf")).unwrap()
+            ).build(context),
+
+            sprite_program,
+            particle_program,
         }
     }
 
@@ -507,6 +437,14 @@ impl Renderer {
         id
     }
 
+    pub fn add_font(&mut self, font: Font) -> FontId {
+        self.font.add_font(font.font)
+    }
+
+    pub fn push_text(&mut self, section: Section) {
+        self.font.queue(section);
+    }
+
     /// Reload all assets that the renderer owns.
     ///
     /// Currently this means as sprite sheets.
@@ -517,13 +455,90 @@ impl Renderer {
     }
 
     pub fn render(&mut self, context: &mut GL33Surface) -> Result<(), ()> {
-        let res = (*self.render_fn)(
-            &self.instances,
-            &self.particles,
-            &mut self.tex,
-            self.camera.matrix(),
-            context,
-        );
+
+        let back_buffer = context.back_buffer().unwrap();
+        let view = self.camera.matrix();
+
+        let triangles: Vec<_> = self.instances.iter().map(|i| {
+            context
+                .new_tess()
+                .set_vertices(&RECT[..])
+                .set_instances(&i[..])
+                .set_mode(Mode::Triangle)
+                .build()
+                .unwrap()
+        }).collect();
+
+        let particles: Vec<_> = self.particles
+            .iter()
+            .map(|s| {
+                (
+                    s.time,
+                    context
+                    .new_tess()
+                    .set_vertices(&RECT[..])
+                    .set_instances(&s.particles[..])
+                    .set_mode(Mode::Triangle)
+                    .build()
+                    .unwrap(),
+                )
+            })
+        .collect();
+
+        self.font.process_queued(context);
+
+        let render = context
+            .new_pipeline_gate()
+            .pipeline(
+                &back_buffer,
+                &PipelineState::default(),
+                |mut pipeline, mut shd_gate| {
+                    let bound_tex = pipeline.bind_texture(&mut self.tex)?;
+
+                    let state = RenderState::default().set_depth_test(None).set_blending(Blending {
+                        equation: Equation::Additive,
+                        src: Factor::SrcAlpha,
+                        dst: Factor::SrcAlphaComplement,
+                    });
+
+                    for i in 0..triangles.len().max(particles.len()) {
+                        if let Some(triangle) = triangles.get(i) {
+                            shd_gate.shade(&mut self.sprite_program, |mut iface, uni, mut rdr_gate| {
+                                iface.set(&uni.tex, bound_tex.binding());
+                                iface.set(&uni.view, view.into());
+                                rdr_gate.render(&state, |mut tess_gate| tess_gate.render(triangle))
+                            })?;
+                        }
+
+                        if let Some((t, p)) = particles.get(i) {
+                            shd_gate.shade(&mut self.particle_program, |mut iface, uni, mut rdr_gate| {
+                                iface.set(&uni.tex, bound_tex.binding());
+                                iface.set(&uni.view, view.into());
+                                rdr_gate.render(&state, |mut tess_gate| {
+                                    iface.set(&uni.t, *t);
+                                    tess_gate.render(p)?;
+                                    Ok(())
+                                })
+                            })?;
+                        }
+                    }
+
+                    self.font
+                        .draw_queued(&mut pipeline, &mut shd_gate, 1024, 720)
+                        .expect("failed to render glyphs");
+
+                    Ok(())
+                },
+                )
+                    .assume();
+
+        let res = if render.is_ok() {
+            context.window().gl_swap_window();
+            Ok(())
+        } else {
+            Err(())
+        };
+
         self.instances = vec![Vec::new()];
         self.particles.clear();
         res

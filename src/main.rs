@@ -6,6 +6,8 @@ use lingon::input;
 use lingon::random::{self, Distribute, RandomProperty};
 use lingon::renderer::{ParticleSystem, Rect, Sprite, Transform};
 
+use luminance_glyph::{Section, Text};
+
 /// A list of all valid inputs.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Name {
@@ -44,6 +46,9 @@ fn main() {
         .gain_variance(0.2)
         .pitch(1.5)
         .pitch_variance(0.2);
+
+    let font = game.assets.load_font(Path::new("res/noto-sans.ttf").to_path_buf());
+    let font = game.renderer.add_font(game.assets[font].clone());
 
     // Add our image as a sprite sheet.
     let transparent_sheet = game.renderer.add_sprite_sheet(game.assets[transparent].clone(), (32, 32));
@@ -127,6 +132,18 @@ fn main() {
                 );
             }
         }
+
+        let section = Section::default()
+            .add_text(
+                Text::new("Hello Luminance")
+                .with_color([1.0, 1.0, 1.0, 1.0])
+                .with_scale(80.0))
+            .add_text(
+                Text::new("Glyph")
+                .with_color([1.0, 0.0, 0.0, 1.0])
+                .with_scale(80.0 + game.total_time().sin() * 20.0))
+        ;
+        game.renderer.push_text(section);
 
         // Simulate a Square distribution...
         const NUM_BUCKETS: usize = 100;
