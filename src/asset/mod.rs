@@ -95,7 +95,7 @@ impl AssetSystem {
     /// Load a new sound from disk.
     pub fn load_audio(&mut self, file: PathBuf) -> AudioAssetID {
         let id = self.audio.len();
-        self.audio.push(Audio::new(file));
+        self.audio.push(Audio::new(file).unwrap());
         AudioAssetID(id)
     }
 

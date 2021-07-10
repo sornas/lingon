@@ -15,6 +15,7 @@ bundled = ["luminance-sdl2/bundled"]
 
 [dependencies]
 lazy_static = "1"
+lewton = "0.10"
 lingon_macro = { path = "lingon_macro" }
 stb_image = "0.2"
 sungod = "0.3"
