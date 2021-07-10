@@ -1,69 +1,68 @@
 use super::LoadedFile;
 
-use std::{ops::Deref, path::PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
 /// Actual audio data.
 #[derive(Clone)]
-pub struct Samples(Arc<RwLock<Vec<f32>>>);
-
-impl Samples {
-    pub fn new() -> Self {
-        Self(Arc::new(RwLock::new(Vec::new())))
-    }
+pub struct Samples {
+    data: Vec<f32>,
+    sample_rate: u32,
 }
 
-impl Deref for Samples {
-    type Target = Arc<RwLock<Vec<f32>>>;
+impl Samples {
+    pub fn new(data: Vec<f32>, sample_rate: u32) -> Self {
+        Self {
+            data,
+            sample_rate,
+        }
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    pub fn data(&self) -> &[f32] {
+        &self.data
+    }
+
+    pub fn sample_rate(&self) -> u32 {
+        self.sample_rate
     }
 }
 
 pub struct Audio {
-    samples: Samples,
+    samples: Arc<RwLock<Samples>>,
     data: LoadedFile,
 }
 
 impl Audio {
     pub fn new(file: PathBuf) -> Self {
         let (data, bytes) = LoadedFile::new(file);
-        let mut ret = Self {
-            samples: Samples::new(),
+        Self {
+            samples: Arc::new(RwLock::new(load_data(bytes))),
             data,
-        };
-        ret.load_data(bytes);
-        ret
+        }
     }
 
-    pub fn samples(&self) -> Samples {
-        self.samples.clone()
+    pub fn samples(&self) -> Arc<RwLock<Samples>> {
+        Arc::clone(&self.samples)
     }
 
     pub fn reload(&mut self) -> bool {
-        //TODO Repeated code here
         if let Some(bytes) = self.data.reload() {
-            self.load_data(bytes);
+            *self.samples.write().unwrap() = load_data(bytes);
             true
         } else {
             false
         }
     }
+}
 
-    pub fn load_data(&mut self, bytes: Vec<u8>) {
-        let (header, data) = wav::read(&mut std::io::Cursor::new(bytes)).unwrap();
-        if header.sampling_rate as i32 != crate::audio::SAMPLE_RATE {
-            println!(
-                "warn: {} contains non-supported sample rate {}\nwarn: only 48000 is currently supported",
-                 self.data.file.display(),
-                 header.sampling_rate,
-            );
-        }
-        let mut samples = self.samples.write().unwrap();
-        match data {
-            wav::BitDepth::ThirtyTwoFloat(data) => *samples = data,
-            _ => todo!("Only WAV containing floats are currently supported"),
-        }
+pub fn load_data(bytes: Vec<u8>) -> Samples {
+    let (header, data) = wav::read(&mut std::io::Cursor::new(bytes)).unwrap();
+    let data = match data {
+        wav::BitDepth::ThirtyTwoFloat(data) =>  data,
+        _ => todo!("Only WAV containing floats are currently supported"),
+    };
+    Samples {
+        data,
+        sample_rate: header.sampling_rate,
     }
 }
