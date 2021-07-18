@@ -42,6 +42,8 @@ impl<T: Eq + Hash + Clone> Game<T> {
 
         let input = input::InputManager::new(surface.sdl());
 
+        panic!("I'm new here!");
+
         Self {
             audio,
             assets,
