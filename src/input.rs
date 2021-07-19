@@ -211,8 +211,14 @@ where
                 } => (Device::Quit, KeyState::Down(frame)),
                 Event::KeyDown {
                     keycode: Some(keycode),
+                    repeat,
                     ..
-                } => (Device::Key(keycode), KeyState::Down(frame)),
+                } => {
+                    if repeat {
+                        continue;
+                    }
+                    (Device::Key(keycode), KeyState::Down(frame))
+                }
                 Event::KeyUp {
                     keycode: Some(keycode),
                     ..
