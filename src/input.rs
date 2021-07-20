@@ -206,15 +206,19 @@ where
         self.text_input_enabled = enabled;
     }
 
-    pub fn text_input_update(&mut self, s: &mut String) {
+    pub fn text_input_update(&mut self, s: &mut String) -> bool {
+        let mut found_return = false;
         for keycode in std::mem::take(&mut self.text_input_events) {
             match keycode {
                 Keycode::Backspace => { s.pop(); }
+                Keycode::Return => found_return = true,
                 c => if let Some(c) = (c as i32).try_into().ok().and_then(char::from_u32) {
+                    println!("{}", c);
                     s.push(c);
-                }
+                },
             }
         }
+        found_return
     }
 
     /// Update the state of the input.
