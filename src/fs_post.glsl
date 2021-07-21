@@ -10,14 +10,14 @@ void main() {
     frag_color = vec4(
             4.0 * texture(tex_col, v_uv).rgb +
 
-            2.0 * texture(tex_col, v_uv + vec2( x,  0)).rgb +
-            2.0 * texture(tex_col, v_uv + vec2(-x,  0)).rgb +
-            2.0 * texture(tex_col, v_uv + vec2( 0, -y)).rgb +
-            2.0 * texture(tex_col, v_uv + vec2( 0,  y)).rgb +
+            1.0 * texture(tex_col, v_uv + vec2( x,  0)).rgb +
+            1.0 * texture(tex_col, v_uv + vec2(-x,  0)).rgb +
+            1.0 * texture(tex_col, v_uv + vec2( 0, -y)).rgb +
+            1.0 * texture(tex_col, v_uv + vec2( 0,  y)).rgb +
 
-            1.0 * texture(tex_col, v_uv + vec2( x,  y)).rgb +
-            1.0 * texture(tex_col, v_uv + vec2(-x,  y)).rgb +
-            1.0 * texture(tex_col, v_uv + vec2(-x, -y)).rgb +
-            1.0 * texture(tex_col, v_uv + vec2( x, -y)).rgb
-    , 16.0) / 16.0;
+            0.0 * texture(tex_col, v_uv + vec2( x,  y)).rgb +
+            0.0 * texture(tex_col, v_uv + vec2(-x,  y)).rgb +
+            0.0 * texture(tex_col, v_uv + vec2(-x, -y)).rgb +
+            0.0 * texture(tex_col, v_uv + vec2( x, -y)).rgb
+    , 8.0) / 8.0;
 }
