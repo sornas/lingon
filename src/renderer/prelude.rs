@@ -110,7 +110,6 @@ pub struct ShaderInterface {
 /// Used internally.
 #[derive(Debug, UniformInterface)]
 pub struct PostShaderInterface {
-    #[uniform(unbound)]
     pub tex_col: Uniform<TextureBinding<Dim2, NormUnsigned>>,
-    pub tex_white: Uniform<TextureBinding<Dim2, NormUnsigned>>,
+    pub pixel_size: Uniform<[f32; 2]>,
 }

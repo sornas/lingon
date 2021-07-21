@@ -477,6 +477,13 @@ impl Renderer {
         }
     }
 
+    /// Resize the current render context.
+    pub fn resize(&mut self, context: &mut GL33Surface, width: u32, height: u32) {
+        self.offscreen_buffer = context
+            .new_framebuffer([width, height], 0, Sampler::default())
+            .expect("framebuffer recreation");
+    }
+
     pub fn render(&mut self, context: &mut GL33Surface) -> Result<(), ()> {
 
         let back_buffer = context.back_buffer().unwrap();
@@ -493,11 +500,11 @@ impl Renderer {
         }).collect();
 
         let quad = context
-                .new_tess()
-                .set_vertices(&RECT[..])
-                .set_mode(Mode::Triangle)
-                .build()
-                .unwrap();
+            .new_tess()
+            .set_vertex_nb(4)
+            .set_mode(Mode::TriangleFan)
+            .build()
+            .unwrap();
 
         let particles: Vec<_> = self.particles
             .iter()
@@ -572,22 +579,26 @@ impl Renderer {
 
         let offscreen_buffer = &mut self.offscreen_buffer;
         let post_program = &mut self.post_program;
+        let dim = offscreen_buffer.size();
+        let pixel_size = [1.0 / (dim[0] as f32), 1.0 / (dim[1] as f32)];
 
         let render = context
             .new_pipeline_gate()
             .pipeline(
                 &back_buffer,
-                &PipelineState::default(),
+                &PipelineState::default().set_clear_color([1.0, 0.0, 0.0, 1.0]),
                 |pipeline, mut shd_gate| {
-                    let (color, white) = offscreen_buffer.color_slot();
+                    let (color, _) = offscreen_buffer.color_slot();
 
                     let col_tex = pipeline.bind_texture(color)?;
-                    let white_tex = pipeline.bind_texture(white)?;
 
                     shd_gate.shade(post_program, |mut iface, uni, mut rdr_gate| {
                         iface.set(&uni.tex_col, col_tex.binding());
-                        iface.set(&uni.tex_white, white_tex.binding());
-                        rdr_gate.render(&RenderState::default(), |mut tess_gate| tess_gate.render(&quad))
+                        iface.set(&uni.pixel_size, pixel_size);
+                        rdr_gate.render(&RenderState::default(), |mut tess_gate| {
+                            tess_gate.render(&quad)?;
+                            Ok(())
+                        })
                     })?;
                     Ok(())
                 },
