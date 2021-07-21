@@ -20,4 +20,6 @@ void main() {
             0.0 * texture(tex_col, v_uv + vec2(-x, -y)).rgb +
             0.0 * texture(tex_col, v_uv + vec2( x, -y)).rgb
     , 8.0) / 8.0;
+
+    frag_color *= min(v_uv.y, 0.1) * (7.0 + 3.0);
 }
