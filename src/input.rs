@@ -213,7 +213,6 @@ where
                 Keycode::Backspace => { s.pop(); }
                 Keycode::Return => found_return = true,
                 c => if let Some(c) = (c as i32).try_into().ok().and_then(char::from_u32) {
-                    println!("{}", c);
                     s.push(c);
                 },
             }
