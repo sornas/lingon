@@ -36,11 +36,12 @@ use luminance_glyph::{
 use cgmath::Vector2;
 use luminance::{blending::{Blending, Equation, Factor}, context::GraphicsContext};
 use luminance::pipeline::PipelineState;
-use luminance::pixel::NormRGBA8UI;
+use luminance::pixel::{NormRGBA8UI, NormRGB8UI, NormR8UI};
+use luminance::framebuffer::Framebuffer;
 use luminance::render_state::RenderState;
 use luminance::tess::Mode;
 use luminance::shader::Program;
-use luminance::texture::{Dim3, GenMipmaps, Sampler, Texture};
+use luminance::texture::{Dim2, Dim3, GenMipmaps, Sampler, Texture};
 use luminance_sdl2::GL33Surface;
 
 pub mod particles;
@@ -62,6 +63,10 @@ const VS_STR: &str = include_str!("vs.glsl");
 const FS_STR: &str = include_str!("fs.glsl");
 /// Particle vertex shader source code.
 const VS_PARTICLE_STR: &str = include_str!("vs_particle.glsl");
+/// Vertex shader source code.
+const VS_POST_STR: &str = include_str!("vs_post.glsl");
+/// Fragment shader source code.
+const FS_POST_STR: &str = include_str!("fs_post.glsl");
 /// The maximum size of a sprite sheet, and the maximum number of
 /// sprite sheets.
 const SPRITE_SHEET_SIZE: [u32; 3] = [512, 512, 512];
@@ -235,6 +240,7 @@ impl Camera {
 }
 
 type ShaderProgram = Program<GLVer, VertexSemantics, (), ShaderInterface>;
+type PostShaderProgram = Program<GLVer, VertexSemantics, (), PostShaderInterface>;
 
 /// A big struct holding all the rendering state.
 pub struct Renderer {
@@ -247,6 +253,9 @@ pub struct Renderer {
 
     pub sprite_program: ShaderProgram,
     pub particle_program: ShaderProgram,
+    pub post_program: PostShaderProgram,
+
+    pub offscreen_buffer: Framebuffer<GLVer, Dim2, (NormRGB8UI, NormR8UI), ()>,
 }
 
 /// If something can be rendered, it has to be Stamp.
@@ -386,8 +395,19 @@ impl Renderer {
             .unwrap()
             .ignore_warnings();
 
+        let post_program = context
+            .new_shader_program::<VertexSemantics, (), PostShaderInterface>()
+            .from_strings(VS_POST_STR, None, None, FS_POST_STR)
+            .unwrap()
+            .ignore_warnings();
+
         let tex: Tex =
             Texture::new(context, SPRITE_SHEET_SIZE, 0, sampler).expect("failed to create texture");
+
+        // TODO(ed): Resize when we resize the window
+        let offscreen_buffer = context
+            .new_framebuffer::<Dim2, (NormRGB8UI, NormR8UI), ()>([800, 800], 0, Sampler::default())
+            .unwrap();
 
         Self {
             camera: Camera::new(),
@@ -404,6 +424,9 @@ impl Renderer {
 
             sprite_program,
             particle_program,
+            post_program,
+
+            offscreen_buffer,
         }
     }
 
@@ -469,6 +492,13 @@ impl Renderer {
                 .unwrap()
         }).collect();
 
+        let quad = context
+                .new_tess()
+                .set_vertices(&RECT[..])
+                .set_mode(Mode::Triangle)
+                .build()
+                .unwrap();
+
         let particles: Vec<_> = self.particles
             .iter()
             .map(|s| {
@@ -487,13 +517,18 @@ impl Renderer {
 
         self.font.process_queued(context);
 
+        let tex = &mut self.tex;
+        let sprite_prog = &mut self.sprite_program;
+        let particle_prog = &mut self.particle_program;
+        let font = &mut self.font;
+
         let render = context
             .new_pipeline_gate()
             .pipeline(
-                &back_buffer,
+                &self.offscreen_buffer, // something_else
                 &PipelineState::default(),
                 |mut pipeline, mut shd_gate| {
-                    let bound_tex = pipeline.bind_texture(&mut self.tex)?;
+                    let bound_tex = pipeline.bind_texture(tex)?;
 
                     let state = RenderState::default().set_depth_test(None).set_blending(Blending {
                         equation: Equation::Additive,
@@ -503,7 +538,7 @@ impl Renderer {
 
                     for i in 0..triangles.len().max(particles.len()) {
                         if let Some(triangle) = triangles.get(i) {
-                            shd_gate.shade(&mut self.sprite_program, |mut iface, uni, mut rdr_gate| {
+                            shd_gate.shade(sprite_prog, |mut iface, uni, mut rdr_gate| {
                                 iface.set(&uni.tex, bound_tex.binding());
                                 iface.set(&uni.view, view.into());
                                 rdr_gate.render(&state, |mut tess_gate| tess_gate.render(triangle))
@@ -511,7 +546,7 @@ impl Renderer {
                         }
 
                         if let Some((t, p)) = particles.get(i) {
-                            shd_gate.shade(&mut self.particle_program, |mut iface, uni, mut rdr_gate| {
+                            shd_gate.shade(particle_prog, |mut iface, uni, mut rdr_gate| {
                                 iface.set(&uni.tex, bound_tex.binding());
                                 iface.set(&uni.view, view.into());
                                 rdr_gate.render(&state, |mut tess_gate| {
@@ -523,14 +558,40 @@ impl Renderer {
                         }
                     }
 
-                    self.font
+                    font
                         .draw_queued(&mut pipeline, &mut shd_gate, 1024, 720)
                         .expect("failed to render glyphs");
 
                     Ok(())
                 },
-                )
-                    .assume();
+            ).assume();
+
+        if render.is_err() {
+            return Err(());
+        };
+
+        let offscreen_buffer = &mut self.offscreen_buffer;
+        let post_program = &mut self.post_program;
+
+        let render = context
+            .new_pipeline_gate()
+            .pipeline(
+                &back_buffer,
+                &PipelineState::default(),
+                |pipeline, mut shd_gate| {
+                    let (color, white) = offscreen_buffer.color_slot();
+
+                    let col_tex = pipeline.bind_texture(color)?;
+                    let white_tex = pipeline.bind_texture(white)?;
+
+                    shd_gate.shade(post_program, |mut iface, uni, mut rdr_gate| {
+                        iface.set(&uni.tex_col, col_tex.binding());
+                        iface.set(&uni.tex_white, white_tex.binding());
+                        rdr_gate.render(&RenderState::default(), |mut tess_gate| tess_gate.render(&quad))
+                    })?;
+                    Ok(())
+                },
+            ).assume();
 
         let res = if render.is_ok() {
             context.window().gl_swap_window();
