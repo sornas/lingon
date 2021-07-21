@@ -242,6 +242,7 @@ where
                     }
                     if self.text_input_enabled {
                         self.text_input_events.push(keycode);
+                        continue;
                     }
                     (Device::Key(keycode), KeyState::Down(frame))
                 }
