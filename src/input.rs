@@ -29,7 +29,7 @@
 //! and to use the rumble feature it needs to be mutable.
 
 pub use sdl2::controller::{Axis, Button};
-pub use sdl2::keyboard::Keycode;
+pub use sdl2::keyboard::{Keycode, Mod};
 pub use sdl2::mouse::MouseButton;
 
 use luminance_sdl2::sdl2;
@@ -69,7 +69,7 @@ pub struct InputManager<T> {
     /// Since the last call to [InputManager::poll].
     mouse_rel: [i32; 2],
     text_input_enabled: bool,
-    text_input_events: Vec<Keycode>,
+    text_input_events: Vec<(Keycode, Mod)>,
 }
 
 /// [i32::MIN, i32::MAX] -> [-1.0, 1.0)
@@ -208,12 +208,18 @@ where
 
     pub fn text_input_update(&mut self, s: &mut String) -> bool {
         let mut found_return = false;
-        for keycode in std::mem::take(&mut self.text_input_events) {
+        for (keycode, keymod) in std::mem::take(&mut self.text_input_events) {
             match keycode {
                 Keycode::Backspace => { s.pop(); }
                 Keycode::Return => found_return = true,
-                c => if let Some(c) = (c as i32).try_into().ok().and_then(char::from_u32) {
-                    s.push(c);
+                c => if let Some(mut c) = (c as i32).try_into().ok().and_then(char::from_u32) {
+                    //TODO(gu): Handle non-ascii better.
+                    if c.is_ascii_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
+                        if keymod.intersects(Mod::LSHIFTMOD | Mod::RSHIFTMOD) {
+                            c.make_ascii_uppercase();
+                        }
+                        s.push(c);
+                    }
                 },
             }
         }
@@ -235,13 +241,14 @@ where
                 Event::KeyDown {
                     keycode: Some(keycode),
                     repeat,
+                    keymod,
                     ..
                 } => {
                     if repeat {
                         continue;
                     }
                     if self.text_input_enabled {
-                        self.text_input_events.push(keycode);
+                        self.text_input_events.push((keycode, keymod));
                         continue;
                     }
                     (Device::Key(keycode), KeyState::Down(frame))
