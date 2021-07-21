@@ -87,6 +87,7 @@ impl<T: Eq + Hash + Clone> Game<T> {
     }
 
     pub fn set_window_size(&mut self, width: u32, height: u32) -> Result<(), IntegerOrSdlError> {
+        self.renderer.resize(&mut self.surface, width, height);
         self.surface.window_mut().set_size(width, height)
     }
 
