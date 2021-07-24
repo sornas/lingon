@@ -211,6 +211,7 @@ where
         for (keycode, keymod) in std::mem::take(&mut self.text_input_events) {
             match keycode {
                 Keycode::Backspace => { s.pop(); }
+                Keycode::Escape => { s.clear(); found_return = true; }
                 Keycode::Return => found_return = true,
                 c => if let Some(mut c) = (c as i32).try_into().ok().and_then(char::from_u32) {
                     //TODO(gu): Handle non-ascii better.
