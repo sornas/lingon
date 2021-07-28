@@ -3,7 +3,7 @@
 use luminance::pipeline::TextureBinding;
 use luminance::pixel::NormUnsigned;
 use luminance::shader::Uniform;
-use luminance::texture::Dim3;
+use luminance::texture::{Dim3, Dim2};
 use luminance_derive::{Semantics, UniformInterface, Vertex};
 
 #[derive(Copy, Clone, Debug, Semantics)]
@@ -104,4 +104,12 @@ pub struct ShaderInterface {
     pub view: Uniform<[[f32; 4]; 4]>,
 
     pub tex: Uniform<TextureBinding<Dim3, NormUnsigned>>,
+}
+
+/// Interface for passing uniforms.
+/// Used internally.
+#[derive(Debug, UniformInterface)]
+pub struct PostShaderInterface {
+    pub tex_col: Uniform<TextureBinding<Dim2, NormUnsigned>>,
+    pub pixel_size: Uniform<[f32; 2]>,
 }
