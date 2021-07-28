@@ -131,20 +131,28 @@ impl AudioCallback for Audio {
             for x in out.iter_mut() {
                 // Move forward
                 source.position += source.pitch * samples.sample_rate() as f32 / SAMPLE_RATE as f32 ;
-                let mut position = source.position as usize; // Truncates
-                if position >= samples.data().len() {
-                    if source.looping {
-                        position %= samples.data().len();
-                        // Keep the decimal on source.position
-                        source.position -= (source.position as usize - position) as f32;
-                    } else {
-                        source.remove = true;
-                        continue 'sources;
-                    }
+                let position = source.position as usize; // Truncates
+                let data = samples.data();
+                let num_samples = data.len();
+
+                // Check if we're done
+                if num_samples <= position && !source.looping {
+                    source.remove = true;
+                    continue 'sources;
                 }
 
+                let (a, b) = if source.looping {
+                    // Keep the decimal on source.position
+                    source.position -= (source.position as usize - position) as f32;
+                    (&data[position % num_samples], &data[(position + 1) % num_samples])
+                } else {
+                    (data.get(position).unwrap_or(&0.0), data.get(position + 1).unwrap_or(&0.0))
+                };
+
                 // Write data
-                *x += samples.data()[position] * source.gain * self.gain;
+                let fade = source.position.rem_euclid(1.0);
+                *x += (1.0 - fade) * a * source.gain * self.gain;
+                *x +=       (fade) * b * source.gain * self.gain;
             }
         }
 
