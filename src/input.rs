@@ -29,7 +29,7 @@
 //! and to use the rumble feature it needs to be mutable.
 
 pub use sdl2::controller::{Axis, Button};
-pub use sdl2::keyboard::Keycode;
+pub use sdl2::keyboard::{Keycode, Mod};
 pub use sdl2::mouse::MouseButton;
 
 use luminance_sdl2::sdl2;
@@ -37,6 +37,7 @@ use sdl2::{GameControllerSubsystem, Sdl};
 use sdl2::controller::GameController;
 use sdl2::event::{Event, WindowEvent};
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::hash::Hash;
 
 /// All the different kinds of input devices we can listen to.
@@ -67,6 +68,8 @@ pub struct InputManager<T> {
     mouse: [i32; 2],
     /// Since the last call to [InputManager::poll].
     mouse_rel: [i32; 2],
+    text_input_enabled: bool,
+    text_input_events: Vec<(Keycode, Mod)>,
 }
 
 /// [i32::MIN, i32::MAX] -> [-1.0, 1.0)
@@ -102,6 +105,8 @@ where
             opened_controllers: HashMap::new(),
             mouse: [0, 0],
             mouse_rel: [0, 0],
+            text_input_enabled: false,
+            text_input_events: Vec::new(),
         }
     }
 
@@ -197,6 +202,31 @@ where
         (self.mouse_rel[0], self.mouse_rel[1])
     }
 
+    pub fn set_text_input_enabled(&mut self, enabled: bool) {
+        self.text_input_enabled = enabled;
+    }
+
+    pub fn text_input_update(&mut self, s: &mut String) -> bool {
+        let mut found_return = false;
+        for (keycode, keymod) in std::mem::take(&mut self.text_input_events) {
+            match keycode {
+                Keycode::Backspace => { s.pop(); }
+                Keycode::Escape => { s.clear(); found_return = true; }
+                Keycode::Return => found_return = true,
+                c => if let Some(mut c) = (c as i32).try_into().ok().and_then(char::from_u32) {
+                    //TODO(gu): Handle non-ascii better.
+                    if c.is_ascii_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
+                        if keymod.intersects(Mod::LSHIFTMOD | Mod::RSHIFTMOD) {
+                            c.make_ascii_uppercase();
+                        }
+                        s.push(c);
+                    }
+                },
+            }
+        }
+        found_return
+    }
+
     /// Update the state of the input.
     pub fn poll(&mut self, sdl: &sdl2::Sdl) {
         self.frame += 1;
@@ -211,8 +241,19 @@ where
                 } => (Device::Quit, KeyState::Down(frame)),
                 Event::KeyDown {
                     keycode: Some(keycode),
+                    repeat,
+                    keymod,
                     ..
-                } => (Device::Key(keycode), KeyState::Down(frame)),
+                } => {
+                    if repeat {
+                        continue;
+                    }
+                    if self.text_input_enabled {
+                        self.text_input_events.push((keycode, keymod));
+                        continue;
+                    }
+                    (Device::Key(keycode), KeyState::Down(frame))
+                }
                 Event::KeyUp {
                     keycode: Some(keycode),
                     ..
