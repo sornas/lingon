@@ -71,7 +71,13 @@ fn main() {
 
     let mut i = 0;
 
+    let mut s = String::new();
+
+    game.input.set_text_input_enabled(true);
     'main: loop {
+        game.input.text_input_update(&mut s);
+        println!("{:?}", s);
+
         // Go a step forward in time.
         game.update();
 
